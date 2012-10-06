@@ -1,0 +1,11 @@
+# Compiled source #
+###################
+ImageQ
+*.o
+
+# Automatically generated files #
+#################################
+ImageQ.pro.user
+Makefile
+moc_*.cpp
+ui_*.h
