@@ -1,10 +1,20 @@
 QT       += core gui
 
-CONFIG      +=  qwt
+win32 {
+  LIBS    += -lqwt
 
-LIBS     += -lopencv_core
-LIBS     += -lopencv_highgui
-LIBS     += -lopencv_imgproc
+  LIBS    += -lopencv_core242.dll
+  LIBS    += -lopencv_highgui242.dll
+  LIBS    += -lopencv_imgproc242.dll
+}
+
+unix {
+  CONFIG  +=  qwt
+
+  LIBS    += -lopencv_core
+  LIBS    += -lopencv_highgui
+  LIBS    += -lopencv_imgproc
+}
 
 TARGET = ImageQ
 TEMPLATE = app
