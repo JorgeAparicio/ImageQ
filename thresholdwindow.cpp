@@ -42,7 +42,11 @@ ThresholdWindow::ThresholdWindow(cv::Mat const& image,
   ui->histogramPlot->enableAxis(QwtPlot::yLeft, false);
 
   this->setAttribute(Qt::WA_DeleteOnClose);
+  ui->histogramPlot->setFixedSize(480, 200);
+  ui->adaptativeFrame->hide();
+  this->adjustSize();
   this->setFixedSize(this->size());
+
 
   this->show();
 
@@ -76,17 +80,52 @@ void ThresholdWindow::on_okPushButton_clicked()
 
 void ThresholdWindow::on_thresholdSlider_sliderMoved(int value)
 {
-  if (yAxis)
+  if (yAxis)  {
     delete yAxis;
+    yAxis = 0;
+  }
 
-  yAxis = new QwtPlotMarker;
+  if (!ui->adaptativeCheckBox->isChecked()) {
+    yAxis = new QwtPlotMarker;
 
-  yAxis->setLineStyle(QwtPlotMarker::VLine);
-  yAxis->setLinePen(QPen(Qt::red));
-  yAxis->setXValue(value + 0.5);
-  yAxis->attach(ui->histogramPlot);
+    yAxis->setLineStyle(QwtPlotMarker::VLine);
+    yAxis->setLinePen(QPen(Qt::red));
+    yAxis->setXValue(value + 0.5);
+    yAxis->attach(ui->histogramPlot);
 
-  ui->histogramPlot->replot();
+    ui->histogramPlot->replot();
+  }
+  threshold();
+}
+
+void ThresholdWindow::on_adaptativeCheckBox_toggled(bool checked)
+{
+  ui->otsuCheckBox->setDisabled(checked);
+
+  if (checked) {
+    if (yAxis)  {
+      delete yAxis;
+      yAxis = 0;
+
+      ui->histogramPlot->replot();
+    }
+
+    ui->otsuCheckBox->setChecked(false);
+
+    ui->adaptativeFrame->show();
+    ui->nonAdaptativeFrame->hide();
+
+    ui->thresholdSlider->setMinimum(-128);
+    ui->thresholdSlider->setMaximum(127);
+  } else {
+    ui->adaptativeFrame->hide();
+    ui->nonAdaptativeFrame->show();
+
+    ui->thresholdSlider->setMinimum(0);
+    ui->thresholdSlider->setMaximum(255);
+  }
+
+  ui->thresholdSlider->setValue(0);
 
   threshold();
 }
@@ -103,7 +142,19 @@ void ThresholdWindow::on_otsuCheckBox_toggled(bool checked)
   threshold();
 }
 
-void ThresholdWindow::on_normalRadioButton_toggled(bool checked)
+void ThresholdWindow::on_binaryRadioButton_toggled(bool checked)
+{
+  if (checked)
+    threshold();
+}
+
+void ThresholdWindow::on_gaussianRadioButton_toggled(bool checked)
+{
+  if (checked)
+    threshold();
+}
+
+void ThresholdWindow::on_meanRadioButton_toggled(bool checked)
 {
   if (checked)
     threshold();
@@ -128,30 +179,59 @@ void ThresholdWindow::on_truncateRadioButton_toggled(bool checked)
 
 void ThresholdWindow::threshold()
 {
-  int type = 0;
+  if (ui->adaptativeCheckBox->isChecked()) {
+    int method = 0;
+    int type = 0;
 
-  if (ui->normalRadioButton->isChecked()) {
+    if (ui->meanRadioButton->isChecked())
+      method = cv::ADAPTIVE_THRESH_MEAN_C;
+    else
+      method = cv::ADAPTIVE_THRESH_GAUSSIAN_C;
+
     if (ui->invertedCheckBox->isChecked())
       type = cv::THRESH_BINARY_INV;
     else
       type = cv::THRESH_BINARY;
-  } else if (ui->truncateRadioButton->isChecked()) {
-    type = cv::THRESH_TRUNC;
-  } else if (ui->toZeroRadioButton->isChecked()) {
-    if (ui->invertedCheckBox->isChecked())
-      type = cv::THRESH_TOZERO_INV;
-    else
-      type = cv::THRESH_TOZERO;
+
+    cv::adaptiveThreshold(backup,
+                          image,
+                          255.0,
+                          method,
+                          type,
+                          ui->sizeSpinBox->value(),
+                          ui->thresholdSlider->value()
+                          );
+  } else {
+    int type = 0;
+
+    if (ui->binaryRadioButton->isChecked()) {
+      if (ui->invertedCheckBox->isChecked())
+        type = cv::THRESH_BINARY_INV;
+      else
+        type = cv::THRESH_BINARY;
+    } else if (ui->truncateRadioButton->isChecked()) {
+      type = cv::THRESH_TRUNC;
+    } else if (ui->toZeroRadioButton->isChecked()) {
+      if (ui->invertedCheckBox->isChecked())
+        type = cv::THRESH_TOZERO_INV;
+      else
+        type = cv::THRESH_TOZERO;
+    }
+
+    if (ui->otsuCheckBox->isChecked())
+      type |= cv::THRESH_OTSU;
+
+    cv::threshold(backup,
+                  image,
+                  ui->thresholdSlider->value(),
+                  255.0,
+                  type);
   }
 
-  if (ui->otsuCheckBox->isChecked())
-    type |= cv::THRESH_OTSU;
-
-  cv::threshold(backup,
-                image,
-                ui->thresholdSlider->value(),
-                255.0,
-                type);
-
   emit updatedImage();
+}
+
+void ThresholdWindow::on_sizeSpinBox_valueChanged(int)
+{
+  threshold();
 }

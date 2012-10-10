@@ -54,12 +54,17 @@ class ThresholdWindow : public QMainWindow
 
     void on_thresholdSlider_sliderMoved(int);
 
+    void on_adaptativeCheckBox_toggled(bool);
     void on_invertedCheckBox_toggled(bool);
     void on_otsuCheckBox_toggled(bool checked);
 
-    void on_normalRadioButton_toggled(bool);
+    void on_binaryRadioButton_toggled(bool);
+    void on_gaussianRadioButton_toggled(bool);
+    void on_meanRadioButton_toggled(bool);
     void on_toZeroRadioButton_toggled(bool);
     void on_truncateRadioButton_toggled(bool);
+
+    void on_sizeSpinBox_valueChanged(int);
 
   private:
     Ui::ThresholdWindow *ui;

@@ -25,7 +25,6 @@
 #include "histogram.h"
 #include "mat2qimage.h"
 
-// TODO: Adaptative thresholding
 // TODO: Batch processing
 // TODO: Color image processing
 // TODO: Image "feedback"
