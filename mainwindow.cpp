@@ -26,7 +26,7 @@
 #include "mat2qimage.h"
 
 // TODO: Batch processing
-// TODO: Color image processing
+// TODO: Channels merge
 // TODO: Image "feedback"
 // TODO: Macroing
 // TODO: Particle counting
@@ -112,6 +112,29 @@ void MainWindow::on_actionGradient_triggered()
   }
 }
 
+void MainWindow::on_actionGrayscale_triggered()
+{
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+
+    if (image->current.channels() == 3) {
+      int index = ui->imagesTabWidget->currentIndex();
+      QString name = ui->imagesTabWidget->tabText(index);
+      cv::Mat grayscale;
+
+      cv::cvtColor(image->current, grayscale, CV_BGR2GRAY);
+
+      Image* newImage = new Image(grayscale, this);
+
+      images.push_back(newImage);
+
+      ui->imagesTabWidget->insertTab(++index,
+                                     newImage,
+                                     name + " (gray)");
+    }
+  }
+}
+
 void MainWindow::on_actionHistogram_triggered()
 {
   if (images.size() > 0) {
@@ -119,6 +142,41 @@ void MainWindow::on_actionHistogram_triggered()
 
     if (image->current.channels() == 1)
       histogramWindow = new HistogramWindow(image->current, this);
+  }
+}
+
+void MainWindow::on_actionHSV_triggered()
+{
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+
+    if (image->current.channels() == 3) {
+      int index = ui->imagesTabWidget->currentIndex();
+      QString name = ui->imagesTabWidget->tabText(index);
+      std::vector<cv::Mat> hsv;
+
+      image->HSV(hsv);
+
+      for (int i = 0; i < 3; i++) {
+        QString newName;
+        Image* newImage = new Image(hsv.at(i), this);
+        images.push_back(newImage);
+
+        switch (i) {
+          case 0:
+            newName = name + " (H)";
+            break;
+          case 1:
+            newName = name + " (S)";
+            break;
+          case 2:
+            newName = name + " (V)";
+            break;
+        }
+
+        ui->imagesTabWidget->insertTab(++index, newImage, newName);
+      }
+    }
   }
 }
 
@@ -172,6 +230,41 @@ void MainWindow::on_actionRevert_triggered()
   Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
   image->revert();
+}
+
+void MainWindow::on_actionRGB_triggered()
+{
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+
+    if (image->current.channels() == 3) {
+      int index = ui->imagesTabWidget->currentIndex();
+      QString name = ui->imagesTabWidget->tabText(index);
+      std::vector<cv::Mat> rgb;
+
+      image->RGB(rgb);
+
+      for (int i = 0; i < 3; i++) {
+        QString newName;
+        Image* newImage = new Image(rgb.at(i), this);
+        images.push_back(newImage);
+
+        switch (i) {
+          case 0:
+            newName = name + " (R)";
+            break;
+          case 1:
+            newName = name + " (G)";
+            break;
+          case 2:
+            newName = name + " (B)";
+            break;
+        }
+
+        ui->imagesTabWidget->insertTab(++index, newImage, newName);
+      }
+    }
+  }
 }
 
 void MainWindow::on_actionSave_triggered()

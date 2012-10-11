@@ -24,21 +24,21 @@
 
 Image::Image(QString pathToImage, QWidget *parent) :
   QWidget(parent),
-  ui(new Ui::Image)
+  ui(new Ui::Image),
+  first(cv::imread(pathToImage.toStdString()))
 {
   ui->setupUi(this);
 
-  first = cv::imread(pathToImage.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
   first.copyTo(current);
 }
 
 Image::Image(cv::Mat const& image, QWidget *parent) :
   QWidget(parent),
-  ui(new Ui::Image)
+  ui(new Ui::Image),
+  first(image)
 {
   ui->setupUi(this);
 
-  image.copyTo(first);
   first.copyTo(current);
 }
 
@@ -46,6 +46,7 @@ Image::~Image()
 {
   delete ui;
 
+  // FIXME: Is this necessary?
   current.release();
   previous.release();
   first.release();
@@ -56,12 +57,30 @@ void Image::backup()
   current.copyTo(previous);
 }
 
+void Image::HSV(std::vector<cv::Mat>& hsv) const
+{
+  cv::Mat tmp;
+
+  cv::cvtColor(current, tmp, CV_BGR2HSV);
+
+  cv::split(tmp, hsv);
+}
+
 void Image::revert()
 {
   first.copyTo(current);
   previous.release();
 
   update();
+}
+
+void Image::RGB(std::vector<cv::Mat>& rgb) const
+{
+  cv::Mat tmp;
+
+  cv::cvtColor(current, tmp, CV_BGR2RGB);
+
+  cv::split(tmp, rgb);
 }
 
 void Image::undo()
@@ -73,7 +92,7 @@ void Image::undo()
 
 }
 
-void Image::update()
+void Image::update() const
 {
   double min, max;
   cv::minMaxLoc(current, &min, &max);

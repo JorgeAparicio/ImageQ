@@ -106,8 +106,29 @@
     <addaction name="actionRevert"/>
     <addaction name="actionUndo"/>
    </widget>
+   <widget class="QMenu" name="menuImage">
+    <property name="title">
+     <string>Image</string>
+    </property>
+    <widget class="QMenu" name="menuSplit">
+     <property name="title">
+      <string>Split</string>
+     </property>
+     <addaction name="actionRGB"/>
+     <addaction name="actionHSV"/>
+    </widget>
+    <widget class="QMenu" name="menuTo">
+     <property name="title">
+      <string>To</string>
+     </property>
+     <addaction name="actionGrayscale"/>
+    </widget>
+    <addaction name="menuSplit"/>
+    <addaction name="menuTo"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuImage"/>
    <addaction name="menuProcess"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
@@ -185,6 +206,21 @@
   <action name="actionMorphology">
    <property name="text">
     <string>Morphology</string>
+   </property>
+  </action>
+  <action name="actionRGB">
+   <property name="text">
+    <string>RGB</string>
+   </property>
+  </action>
+  <action name="actionHSV">
+   <property name="text">
+    <string>HSV</string>
+   </property>
+  </action>
+  <action name="actionGrayscale">
+   <property name="text">
+    <string>Grayscale</string>
    </property>
   </action>
  </widget>

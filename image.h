@@ -41,11 +41,13 @@ class Image : public QWidget
     cv::Mat previous;
 
     void backup();
+    void HSV(std::vector<cv::Mat>& hsv) const;
     void revert();
+    void RGB(std::vector<cv::Mat>& rgb) const;
     void undo();
 
   public slots:
-    void update();
+    void update() const;
     
   private slots:
     void on_fitToScreenCheckBox_toggled();

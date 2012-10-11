@@ -53,11 +53,14 @@ class MainWindow : public QMainWindow
     void on_actionClose_triggered();
     void on_actionEqualize_triggered();
     void on_actionGradient_triggered();
+    void on_actionGrayscale_triggered();
     void on_actionHistogram_triggered();
+    void on_actionHSV_triggered();
     void on_actionInvert_triggered();
     void on_actionMorphology_triggered();
     void on_actionOpen_triggered();
     void on_actionRevert_triggered();
+    void on_actionRGB_triggered();
     void on_actionSave_triggered();
     void on_actionStretch_triggered();
     void on_actionThreshold_triggered();
