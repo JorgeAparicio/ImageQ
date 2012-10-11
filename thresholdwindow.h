@@ -22,10 +22,9 @@
 
 #include <QMainWindow>
 
-#include <opencv2/opencv.hpp>
-
 #include <qwt_plot_marker.h>
 
+#include "image.h"
 #include "histogram.h"
 
 namespace Ui {
@@ -37,13 +36,12 @@ class ThresholdWindow : public QMainWindow
     Q_OBJECT
     
   public:
-    explicit ThresholdWindow(cv::Mat const&,
-                             cv::Mat const&,
+    explicit ThresholdWindow(Image*,
                              QWidget *parent = 0);
     ~ThresholdWindow();
     
   signals:
-    void updatedImage();
+    void update();
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -68,8 +66,7 @@ class ThresholdWindow : public QMainWindow
 
   private:
     Ui::ThresholdWindow *ui;
-    cv::Mat image;
-    cv::Mat backup;
+    Image* image;
     Histogram histogram;
     QwtPlotMarker *yAxis;
     bool abort;

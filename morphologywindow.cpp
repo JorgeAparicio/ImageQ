@@ -22,16 +22,19 @@
 
 #include "mat2qimage.h"
 
-MorphologyWindow::MorphologyWindow(cv::Mat const& image,
-                                   cv::Mat const& backup,
+MorphologyWindow::MorphologyWindow(Image* image,
                                    QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MorphologyWindow),
   image(image),
-  backup(backup),
   abort(true)
 {
   ui->setupUi(this);
+
+  image->backup();
+
+  connect(this,   SIGNAL(update()),
+          image,  SLOT(update()));
 
   this->setAttribute(Qt::WA_DeleteOnClose);
   this->setFixedSize(this->size());
@@ -50,9 +53,7 @@ MorphologyWindow::~MorphologyWindow()
 void MorphologyWindow::closeEvent(QCloseEvent *)
 {
   if (abort)
-    backup.copyTo(image);
-
-  emit updatedImage();
+    image->undo();
 }
 
 void MorphologyWindow::on_cancelPushButton_clicked()
@@ -167,26 +168,26 @@ void MorphologyWindow::morphology()
   int iterations = ui->iterationsSpinBox->value();
 
   if (ui->closeRadioButton->isChecked()) {
-    cv::dilate(backup, image, structuringElement);
-    cv::erode(image, image, structuringElement);
+    cv::dilate(image->previous, image->current, structuringElement);
+    cv::erode(image->current, image->current, structuringElement);
   } else if (ui->dilateRadioButton->isChecked()) {
-    cv::dilate(backup,
-               image,
+    cv::dilate(image->previous,
+               image->current,
                structuringElement,
                cv::Point(-1, -1),
                iterations);
   } else if (ui->erodeRadioButton->isChecked()) {
-    cv::erode(backup,
-              image,
+    cv::erode(image->previous,
+              image->current,
               structuringElement,
               cv::Point(-1, -1),
               iterations);
   } else if (ui->openRadioButton->isChecked()) {
-    cv::erode(backup, image, structuringElement);
-    cv::dilate(image, image, structuringElement);
+    cv::erode(image->previous, image->current, structuringElement);
+    cv::dilate(image->current, image->current, structuringElement);
   }
 
-  emit updatedImage();
+  emit update();
 }
 
 void MorphologyWindow::updateStructuringElement()

@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     cannywindow.cpp \
     gradientwindow.cpp \
     morphologywindow.cpp \
-    thresholdwindow.cpp
+    thresholdwindow.cpp \
+    image.cpp
 
 HEADERS  += mainwindow.h \
     mat2qimage.h \
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     cannywindow.h \
     gradientwindow.h \
     morphologywindow.h \
-    thresholdwindow.h
+    thresholdwindow.h \
+    image.h
 
 FORMS    += mainwindow.ui \
     aboutwindow.ui \
@@ -50,7 +52,8 @@ FORMS    += mainwindow.ui \
     cannywindow.ui \
     gradientwindow.ui \
     morphologywindow.ui \
-    thresholdwindow.ui
+    thresholdwindow.ui \
+    image.ui
 
 OTHER_FILES += \
     README.txt \

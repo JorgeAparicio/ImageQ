@@ -20,18 +20,21 @@
 #include "thresholdwindow.h"
 #include "ui_thresholdwindow.h"
 
-ThresholdWindow::ThresholdWindow(cv::Mat const& image,
-                                 cv::Mat const& backup,
+ThresholdWindow::ThresholdWindow(Image* image,
                                  QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::ThresholdWindow),
   image(image),
-  backup(backup),
-  histogram(image, 256),
+  histogram(image->current, 256),
   yAxis(0),
   abort(true)
 {
   ui->setupUi(this);
+
+  image->backup();
+
+  connect(this,   SIGNAL(update()),
+          image,  SLOT(update()));
 
   histogram.attach(ui->histogramPlot);
 
@@ -42,11 +45,11 @@ ThresholdWindow::ThresholdWindow(cv::Mat const& image,
   ui->histogramPlot->enableAxis(QwtPlot::yLeft, false);
 
   this->setAttribute(Qt::WA_DeleteOnClose);
+
   ui->histogramPlot->setFixedSize(480, 200);
   ui->adaptativeFrame->hide();
   this->adjustSize();
   this->setFixedSize(this->size());
-
 
   this->show();
 
@@ -61,9 +64,7 @@ ThresholdWindow::~ThresholdWindow()
 void ThresholdWindow::closeEvent(QCloseEvent *)
 {
   if (abort)
-    backup.copyTo(image);
-
-  emit updatedImage();
+    image->undo();
 }
 
 void ThresholdWindow::on_cancelPushButton_clicked()
@@ -193,8 +194,8 @@ void ThresholdWindow::threshold()
     else
       type = cv::THRESH_BINARY;
 
-    cv::adaptiveThreshold(backup,
-                          image,
+    cv::adaptiveThreshold(image->previous,
+                          image->current,
                           255.0,
                           method,
                           type,
@@ -221,14 +222,14 @@ void ThresholdWindow::threshold()
     if (ui->otsuCheckBox->isChecked())
       type |= cv::THRESH_OTSU;
 
-    cv::threshold(backup,
-                  image,
+    cv::threshold(image->previous,
+                  image->current,
                   ui->thresholdSlider->value(),
                   255.0,
                   type);
   }
 
-  emit updatedImage();
+  emit update();
 }
 
 void ThresholdWindow::on_sizeSpinBox_valueChanged(int)

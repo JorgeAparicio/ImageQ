@@ -35,6 +35,9 @@ HistogramWindow::HistogramWindow(cv::Mat const& image, QWidget *parent) :
   ui->histogramPlot->enableAxis(QwtPlot::xBottom, false);
   ui->histogramPlot->enableAxis(QwtPlot::yLeft, false);
 
+  ui->histogramPlot->setFixedSize(480, 200);
+  this->adjustSize();
+
   this->setAttribute(Qt::WA_DeleteOnClose);
   this->setFixedSize(this->size());
 

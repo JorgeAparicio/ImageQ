@@ -22,7 +22,7 @@
 
 #include <QMainWindow>
 
-#include <opencv2/opencv.hpp>
+#include "image.h"
 
 namespace Ui {
   class GradientWindow;
@@ -33,13 +33,12 @@ class GradientWindow : public QMainWindow
     Q_OBJECT
     
   public:
-    explicit GradientWindow(cv::Mat const&,
-                            cv::Mat const&,
+    explicit GradientWindow(Image* image,
                             QWidget *parent = 0);
     ~GradientWindow();
     
   signals:
-    void updatedImage();
+    void update();
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -60,8 +59,7 @@ class GradientWindow : public QMainWindow
 
   private:
     Ui::GradientWindow *ui;
-    cv::Mat image;
-    cv::Mat backup;
+    Image* image;
     bool abort;
 
     void gradient();

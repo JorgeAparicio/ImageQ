@@ -20,16 +20,19 @@
 #include "cannywindow.h"
 #include "ui_cannywindow.h"
 
-CannyWindow::CannyWindow(cv::Mat const& image,
-                         cv::Mat const& backup,
+CannyWindow::CannyWindow(Image* image,
                          QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::CannyWindow),
   image(image),
-  backup(backup),
   abort(true)
 {
   ui->setupUi(this);
+
+  image->backup();
+
+  connect(this,   SIGNAL(update()),
+          image,  SLOT(update()));
 
   this->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -50,9 +53,7 @@ CannyWindow::~CannyWindow()
 void CannyWindow::closeEvent(QCloseEvent *)
 {
   if (abort)
-    backup.copyTo(image);
-
-  emit updatedImage();
+    image->undo();
 }
 
 void CannyWindow::on_cancelPushButton_clicked()
@@ -139,8 +140,8 @@ void CannyWindow::canny()
   bool l2norm = ui->l2RadioButton->isChecked();
 
   if (ui->manualRadioButton->isChecked()) {
-    cv::Canny(backup,
-              image,
+    cv::Canny(image->previous,
+              image->current,
               ui->minimumSlider->value(),
               ui->maximumSlider->value(),
               size,
@@ -148,8 +149,8 @@ void CannyWindow::canny()
   } else if (ui->meanRadioButton->isChecked()) {
     double mean = calculateMean();
 
-    cv::Canny(backup,
-              image,
+    cv::Canny(image->previous,
+              image->current,
               2 * mean / 3,
               4 * mean / 3,
               size,
@@ -157,34 +158,34 @@ void CannyWindow::canny()
   } else {
     double median = calculateMedian();
 
-    cv::Canny(backup,
-              image,
+    cv::Canny(image->previous,
+              image->current,
               2 * median / 3,
               4 * median / 3,
               size,
               l2norm);
   }
 
-  emit updatedImage();
+  emit update();
 }
 
 double CannyWindow::calculateMean()
 {
-  return cv::mean(backup)[0];
+  return cv::mean(image->previous)[0];
 }
 
 double CannyWindow::calculateMedian()
 {
   cv::Mat histogram;
   int acc = 0;
-  int const size = backup.rows * backup.cols;
+  int const size = image->previous.rows * image->previous.cols;
 
   std::vector<cv::Mat> images;
   std::vector<int> channels;
   std::vector<int> histSize;
   std::vector<float> ranges;
 
-  images.push_back(backup);
+  images.push_back(image->previous);
   channels.push_back(0);
   histSize.push_back(256);
   ranges.push_back(0);

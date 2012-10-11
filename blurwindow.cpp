@@ -20,16 +20,19 @@
 #include "blurwindow.h"
 #include "ui_blurwindow.h"
 
-BlurWindow::BlurWindow(cv::Mat const& image,
-                       cv::Mat const& backup,
+BlurWindow::BlurWindow(Image* image,
                        QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::BlurWindow),
   image(image),
-  backup(backup),
   abort(true)
 {
   ui->setupUi(this);
+
+  image->backup();
+
+  connect(this,   SIGNAL(update()),
+          image,  SLOT(update()));
 
   this->setAttribute(Qt::WA_DeleteOnClose);
   this->setFixedSize(this->size());
@@ -47,9 +50,7 @@ BlurWindow::~BlurWindow()
 void BlurWindow::closeEvent(QCloseEvent *)
 {
   if (abort)
-    backup.copyTo(image);
-
-  emit updatedImage();
+    image->undo();
 }
 
 void BlurWindow::on_cancelPushButton_clicked()
@@ -92,12 +93,12 @@ void BlurWindow::blur()
   int size = ui->sizeSpinBox->value();
 
   if (ui->averageRadioButton->isChecked()) {
-    cv::blur(backup, image, cv::Size(size, size));
+    cv::blur(image->previous, image->current, cv::Size(size, size));
   } else if (ui->gaussianRadioButton->isChecked()) {
-    cv::GaussianBlur(backup, image, cv::Size(size, size), 0);
+    cv::GaussianBlur(image->previous, image->current, cv::Size(size, size), 0);
   } else {
-    cv::medianBlur(backup, image, size);
+    cv::medianBlur(image->previous, image->current, size);
   }
 
-  emit updatedImage();
+  emit update();
 }

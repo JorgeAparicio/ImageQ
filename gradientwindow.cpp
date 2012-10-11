@@ -20,16 +20,19 @@
 #include "gradientwindow.h"
 #include "ui_gradientwindow.h"
 
-GradientWindow::GradientWindow(cv::Mat const& image,
-                               cv::Mat const& backup,
+GradientWindow::GradientWindow(Image* image,
                                QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::GradientWindow),
   image(image),
-  backup(backup),
   abort(true)
 {
   ui->setupUi(this);
+
+  image->backup();
+
+  connect(this,   SIGNAL(update()),
+          image,  SLOT(update()));
 
   this->setAttribute(Qt::WA_DeleteOnClose);
   this->setFixedSize(this->size());
@@ -47,9 +50,7 @@ GradientWindow::~GradientWindow()
 void GradientWindow::closeEvent(QCloseEvent *)
 {
   if (abort)
-    backup.copyTo(image);
-
-  emit updatedImage();
+    image->undo();
 }
 
 void GradientWindow::on_cancelPushButton_clicked()
@@ -166,7 +167,7 @@ void GradientWindow::gradient()
   int dx = ui->xSpinBox->value();
   int dy = ui->ySpinBox->value();
 
-  backup.convertTo(tmp, CV_32F, 1.0/255.0);
+  image->previous.convertTo(tmp, CV_32F, 1.0/255.0);
 
   if (ui->laplacianRadioButton->isChecked()) {
     cv::Laplacian(tmp, tmp, CV_32F, size);
@@ -200,7 +201,7 @@ void GradientWindow::gradient()
 
   cv::normalize(tmp, tmp, 0, 1, cv::NORM_MINMAX);
 
-  tmp.convertTo(image, CV_8U, 255.0);
+  tmp.convertTo(image->current, CV_8U, 255.0);
 
-  emit updatedImage();
+  emit update();
 }

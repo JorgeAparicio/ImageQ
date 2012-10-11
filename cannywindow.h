@@ -22,7 +22,7 @@
 
 #include <QMainWindow>
 
-#include <opencv2/opencv.hpp>
+#include "image.h"
 
 namespace Ui {
   class CannyWindow;
@@ -33,13 +33,12 @@ class CannyWindow : public QMainWindow
     Q_OBJECT
     
   public:
-    explicit CannyWindow(cv::Mat const&,
-                         cv::Mat const&,
+    explicit CannyWindow(Image* image,
                          QWidget *parent = 0);
     ~CannyWindow();
 
   signals:
-    void updatedImage();
+    void update();
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -61,8 +60,7 @@ class CannyWindow : public QMainWindow
     
   private:
     Ui::CannyWindow *ui;
-    cv::Mat image;
-    cv::Mat backup;
+    Image* image;
     bool abort;
 
     void canny();

@@ -33,7 +33,6 @@
 // TODO: Region of Interest (a.k.a. masking)
 // TODO: Video processing...?
 // TODO: Watershed
-// TODO: Windows support
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -58,62 +57,6 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
-void MainWindow::showImage()
-{
-  double min, max;
-  QPixmap pixmap;
-
-  ui->imageLabel->clear();
-
-  if (currentImage.data == 0) {
-    ui->imageLabel->setText("Your image goes here.");
-
-    ui->sizeLabel->setText("0x0");
-    ui->channelsLabel->setText("-");
-    ui->depthLabel->setText("-");
-    ui->minLabel->setText("0");
-    ui->maxLabel->setText("0");
-  } else {
-    cv::minMaxLoc(currentImage, &min, &max);
-
-    pixmap = QPixmap::fromImage(Mat2QImage(currentImage));
-
-    ui->sizeLabel->setText(QString::number(currentImage.rows) + "x"
-                           + QString::number(currentImage.cols));
-    ui->minLabel->setText(QString::number(min));
-    ui->maxLabel->setText(QString::number(max));
-
-    switch (currentImage.channels()) {
-      case 1:
-        ui->channelsLabel->setText("1");
-        break;
-      case 3:
-        ui->channelsLabel->setText("3");
-        break;
-    }
-
-    switch (currentImage.depth()) {
-      case CV_8U:
-        ui->depthLabel->setText("8 bits");
-        break;
-      case CV_32F:
-        ui->depthLabel->setText("32 bits");
-        break;
-    }
-
-    if (ui->fitToScreenCheckBox->isChecked())
-      ui->imageLabel->setPixmap(pixmap.scaled(ui->imageLabel->size(),
-                                              Qt::KeepAspectRatio));
-    else
-      ui->imageLabel->setPixmap(pixmap);
-  }
-}
-
-void MainWindow::on_fitToScreenCheckBox_toggled(bool)
-{
-  showImage();
-}
-
 void MainWindow::on_actionAbout_triggered()
 {
   aboutWindow = new AboutWindow(this);
@@ -121,29 +64,21 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionBlur_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    blurWindow = new BlurWindow(currentImage, previousImage, this);
-
-    connect(blurWindow, SIGNAL(updatedImage()),
-            this,       SLOT(showImage()));
-
-    showImage();
+    if (image->current.channels() == 1)
+      blurWindow = new BlurWindow(image, this);
   }
 }
 
 void MainWindow::on_actionCanny_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    cannyWindow = new CannyWindow(currentImage, previousImage, this);
-
-    connect(cannyWindow,  SIGNAL(updatedImage()),
-            this,         SLOT(showImage()));
-
-    showImage();
+    if (image->current.channels() == 1)
+      cannyWindow = new CannyWindow(image, this);
   }
 }
 
@@ -154,131 +89,153 @@ void MainWindow::on_actionClose_triggered()
 
 void MainWindow::on_actionEqualize_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    cv::equalizeHist(currentImage, currentImage);
+    if (image->current.channels() == 1) {
+      image->backup();
 
-    showImage();
+      cv::equalizeHist(image->previous, image->current);
+
+      image->update();
+    }
   }
 }
 
 void MainWindow::on_actionGradient_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    gradientWindow = new GradientWindow(currentImage, previousImage, this);
-
-    connect(gradientWindow, SIGNAL(updatedImage()),
-            this,           SLOT(showImage()));
-
-    showImage();
+    if (image->current.channels() == 1)
+      gradientWindow = new GradientWindow(image, this);
   }
 }
 
 void MainWindow::on_actionHistogram_triggered()
 {
-  if (currentImage.data != 0)
-    histogramWindow = new HistogramWindow(currentImage, this);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+
+    if (image->current.channels() == 1)
+      histogramWindow = new HistogramWindow(image->current, this);
+  }
 }
 
 void MainWindow::on_actionInvert_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    currentImage = 255 - previousImage;
+    if (image->current.channels() == 1) {
+      image->backup();
 
-    showImage();
+      image->current = 255 - image->current;
+
+      image->update();
+    }
   }
 }
 
 void MainWindow::on_actionMorphology_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    morphologyWindow = new MorphologyWindow(currentImage, previousImage, this);
-
-    connect(morphologyWindow, SIGNAL(updatedImage()),
-            this,             SLOT(showImage()));
-
-    showImage();
+    if (image->current.channels() == 1)
+      morphologyWindow = new MorphologyWindow(image, this);
   }
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-  imagePath = QFileDialog::getOpenFileName(this,
-                                           QLatin1String("Open"));
+  QString filename = QFileDialog::getOpenFileName(this, "Open");
 
-  if (!imagePath.isEmpty()) {
-    previousImage.release();
+  if (!filename.isEmpty()) {
+    images.push_back(new Image(filename, this));
 
-    currentImage = cv::imread(imagePath.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+#ifdef Q_OS_WIN32
+    int index = filename.lastIndexOf("\\");
+#else
+    int index = filename.lastIndexOf("/");
+#endif
 
-    showImage();
+    if (index != -1)
+      filename = filename.right(filename.length() - 1 - index);
+
+    ui->imagesTabWidget->addTab(images.last(), filename);
   }
 }
 
 void MainWindow::on_actionRevert_triggered()
 {
-  if (!imagePath.isEmpty()) {
-    previousImage.release();
+  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    currentImage = cv::imread(imagePath.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
-
-    showImage();
-  }
+  image->revert();
 }
 
 void MainWindow::on_actionSave_triggered()
 {
-  QString savePath = QFileDialog::getSaveFileName(this, QLatin1String("Save"));
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
 
-  if (!savePath.isEmpty() && currentImage.data != 0) {
-    std::vector<int> qualityType;
+    QString filename = QFileDialog::getSaveFileName(this, QLatin1String("Save"));
 
-    qualityType.push_back(CV_IMWRITE_JPEG_QUALITY);
-    qualityType.push_back(90);
+    if (!filename.isEmpty()) {
+      std::vector<int> qualityType;
 
-    savePath += ".jpg";
+      qualityType.push_back(CV_IMWRITE_JPEG_QUALITY);
+      qualityType.push_back(90);
 
-    cv::imwrite(savePath.toStdString(), currentImage, qualityType);
+      filename += ".jpg";
+
+      cv::imwrite(filename.toStdString(), image->current, qualityType);
+    }
   }
 }
 
 void MainWindow::on_actionStretch_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
 
-    cv::normalize(currentImage, currentImage, 0, 255, cv::NORM_MINMAX);
+    image->backup();
 
-    showImage();
+    cv::normalize(image->previous, image->current, 0, 255, cv::NORM_MINMAX);
+
+    image->update();
   }
 }
 
 void MainWindow::on_actionThreshold_triggered()
 {
-  if (currentImage.data != 0) {
-    currentImage.copyTo(previousImage);
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
 
-    thresholdWindow = new ThresholdWindow(currentImage, previousImage, this);
-
-    connect(thresholdWindow,  SIGNAL(updatedImage()),
-            this,             SLOT(showImage()));
-
-    showImage();
+    if (image->current.channels() == 1)
+      thresholdWindow = new ThresholdWindow(image, this);
   }
 }
 
 void MainWindow::on_actionUndo_triggered()
 {
-  if (previousImage.data != 0) {
-    previousImage.copyTo(currentImage);
+  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    showImage();
+  image->undo();
+}
+
+void MainWindow::on_imagesTabWidget_currentChanged(QWidget *image)
+{
+  ((Image*)image)->update();
+}
+
+void MainWindow::on_imagesTabWidget_tabCloseRequested(int index)
+{
+  // FIXME: Can't delete last element of QTabWidget.
+  if (images.size() > 1) {
+    index = images.indexOf((Image*)(ui->imagesTabWidget->widget(index)));
+
+    delete images.at(index);
+    images.remove(index);
   }
 }

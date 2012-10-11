@@ -24,6 +24,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "image.h"
+
 #include "aboutwindow.h"
 #include "blurwindow.h"
 #include "cannywindow.h"
@@ -43,13 +45,8 @@ class MainWindow : public QMainWindow
   public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    
-  public slots:
-    void showImage();
 
   private slots:
-    void on_fitToScreenCheckBox_toggled(bool checked);
-
     void on_actionAbout_triggered();
     void on_actionBlur_triggered();
     void on_actionCanny_triggered();
@@ -66,13 +63,12 @@ class MainWindow : public QMainWindow
     void on_actionThreshold_triggered();
     void on_actionUndo_triggered();
 
+    void on_imagesTabWidget_currentChanged(QWidget *image);
+    void on_imagesTabWidget_tabCloseRequested(int index);
+
   private:
     Ui::MainWindow *ui;
-    cv::Mat currentImage;
-    cv::Mat previousImage;
-    QString imagePath;
-    QImage image;
-    double min, max;
+    QVector<Image*> images;
     AboutWindow *aboutWindow;
     BlurWindow *blurWindow;
     CannyWindow *cannyWindow;

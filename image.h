@@ -17,48 +17,42 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BLURWINDOW_H
-#define BLURWINDOW_H
+#ifndef IMAGE_H
+#define IMAGE_H
 
-#include <QMainWindow>
+#include <QWidget>
 
-#include "image.h"
+#include <opencv2/opencv.hpp>
 
 namespace Ui {
-  class BlurWindow;
+  class Image;
 }
 
-class BlurWindow : public QMainWindow
+class Image : public QWidget
 {
     Q_OBJECT
     
   public:
-    explicit BlurWindow(Image* image,
-                        QWidget *parent = 0);
-    ~BlurWindow();
-    
-  signals:
+    explicit Image(QString pathToImage, QWidget *parent = 0);
+    explicit Image(cv::Mat const& image, QWidget *parent = 0);
+    ~Image();
+
+    cv::Mat current;
+    cv::Mat previous;
+
+    void backup();
+    void revert();
+    void undo();
+
+  public slots:
     void update();
-
-  protected:
-    void closeEvent(QCloseEvent *);
-
+    
   private slots:
-    void on_cancelPushButton_clicked();
-    void on_okPushButton_clicked();
-
-    void on_averageRadioButton_toggled(bool);
-    void on_gaussianRadioButton_toggled(bool);
-    void on_medianRadioButton_toggled(bool);
-
-    void on_sizeSpinBox_valueChanged(int);
+    void on_fitToScreenCheckBox_toggled();
 
   private:
-    Ui::BlurWindow *ui;
-    Image* image;
-    bool abort;
-
-    void blur();
+    Ui::Image *ui;
+    cv::Mat first;
 };
 
-#endif // BLURWINDOW_H
+#endif // IMAGE_H
