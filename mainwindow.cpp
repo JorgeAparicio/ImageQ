@@ -319,16 +319,14 @@ void MainWindow::on_actionUndo_triggered()
 
 void MainWindow::on_imagesTabWidget_currentChanged(QWidget *image)
 {
-  ((Image*)image)->update();
+  if (ui->imagesTabWidget->currentIndex() != -1)
+    ((Image*)image)->update();
 }
 
 void MainWindow::on_imagesTabWidget_tabCloseRequested(int index)
 {
-  // FIXME: Can't delete last element of QTabWidget.
-  if (images.size() > 1) {
-    index = images.indexOf((Image*)(ui->imagesTabWidget->widget(index)));
+  index = images.indexOf((Image*)(ui->imagesTabWidget->widget(index)));
 
-    delete images.at(index);
-    images.remove(index);
-  }
+  delete images.at(index);
+  images.remove(index);
 }
