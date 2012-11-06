@@ -30,6 +30,10 @@ Image::Image(QString pathToImage, QWidget *parent) :
   ui->setupUi(this);
 
   first.copyTo(current);
+
+  timer.setSingleShot(true);
+  connect(&timer, SIGNAL(timeout()),
+          this,   SLOT(rescale()));
 }
 
 Image::Image(cv::Mat const& image, QWidget *parent) :
@@ -40,6 +44,10 @@ Image::Image(cv::Mat const& image, QWidget *parent) :
   ui->setupUi(this);
 
   first.copyTo(current);
+
+  timer.setSingleShot(true);
+  connect(&timer, SIGNAL(timeout()),
+          this,   SLOT(rescale()));
 }
 
 Image::~Image()
@@ -126,12 +134,27 @@ void Image::update() const
   if (ui->fitToScreenCheckBox->isChecked())
     pixmap = pixmap.scaled(ui->displayLabel->size(), Qt::KeepAspectRatio);
 
-  ui->displayLabel->clear();
   ui->displayLabel->setPixmap(pixmap);
-
 }
 
 void Image::on_fitToScreenCheckBox_toggled()
 {
-  update();
+  if (ui->fitToScreenCheckBox->isChecked()) {
+    ui->displayLabel->clear();
+
+    timer.start(5);
+  } else {
+    QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
+
+    ui->displayLabel->setPixmap(pixmap);
+  }
+}
+
+void Image::rescale() const
+{
+  QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
+
+  pixmap = pixmap.scaled(ui->displayLabel->size(), Qt::KeepAspectRatio);
+
+  ui->displayLabel->setPixmap(pixmap);
 }

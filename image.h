@@ -21,6 +21,7 @@
 #define IMAGE_H
 
 #include <QWidget>
+#include <QTimer>
 
 #include <opencv2/opencv.hpp>
 
@@ -48,6 +49,7 @@ class Image : public QWidget
 
   public slots:
     void update() const;
+    void rescale() const;
     
   private slots:
     void on_fitToScreenCheckBox_toggled();
@@ -55,6 +57,7 @@ class Image : public QWidget
   private:
     Ui::Image *ui;
     cv::Mat first;
+    QTimer timer;
 };
 
 #endif // IMAGE_H

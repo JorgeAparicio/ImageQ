@@ -21,9 +21,6 @@
        <property name="text">
         <string>Fit to screen</string>
        </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
       </widget>
      </item>
      <item>
