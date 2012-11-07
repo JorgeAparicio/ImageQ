@@ -36,8 +36,8 @@ QImage Mat2QImage(cv::Mat const& src)
     } else if (src.channels() == 3) {
       for (int i = 0; i < src.rows; ++i) {
         for (int j = 0; j < src.cols; ++j) {
-          cv::Vec3b rgb = src.at<cv::Vec3b>(i, j);
-          dest.setPixel(j, i, qRgb(rgb[2], rgb[1], rgb[0]));
+          cv::Vec3b bgr = src.at<cv::Vec3b>(i, j);
+          dest.setPixel(j, i, qRgb(bgr[2], bgr[1], bgr[0]));
         }
       }
     }
@@ -52,8 +52,8 @@ QImage Mat2QImage(cv::Mat const& src)
     } else if (src.channels() == 3) {
       for (int i = 0; i < src.rows; ++i) {
         for (int j = 0; j < src.cols; ++j) {
-          cv::Vec3f rgb = scale * src.at<cv::Vec3f>(i, j);
-          dest.setPixel(j, i, qRgb(rgb[2], rgb[1], rgb[0]));
+          cv::Vec3f bgr = scale * src.at<cv::Vec3f>(i, j);
+          dest.setPixel(j, i, qRgb(bgr[2], bgr[1], bgr[0]));
         }
       }
     }
