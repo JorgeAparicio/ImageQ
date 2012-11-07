@@ -17,48 +17,25 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef IMAGELABEL_H
+#define IMAGELABEL_H
 
-#include <QWidget>
-#include <QTimer>
+#include <QLabel>
 
-#include <opencv2/opencv.hpp>
-
-namespace Ui {
-  class Image;
-}
-
-class Image : public QWidget
+class ImageLabel : public QLabel
 {
     Q_OBJECT
-    
   public:
-    explicit Image(QString pathToImage, QWidget *parent = 0);
-    explicit Image(cv::Mat const& image, QWidget *parent = 0);
-    ~Image();
-
-    cv::Mat current;
-    cv::Mat previous;
-
-    void backup();
-    void HSV(std::vector<cv::Mat>& hsv) const;
-    void revert();
-    void RGB(std::vector<cv::Mat>& rgb) const;
-    void undo();
-
-  public slots:
-    void update() const;
-    void rescale() const;
-    void info(int x, int y) const;
+    explicit ImageLabel(QWidget *parent = 0);
     
-  private slots:
-    void on_fitToScreenCheckBox_toggled();
+  protected:
+    void mouseMoveEvent(QMouseEvent *ev);
 
-  private:
-    Ui::Image *ui;
-    cv::Mat first;
-    QTimer timer;
+  signals:
+    void hover(int x, int y);
+    
+  public slots:
+    
 };
 
-#endif // IMAGE_H
+#endif // IMAGELABEL_H

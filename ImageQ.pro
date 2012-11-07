@@ -31,7 +31,8 @@ SOURCES += main.cpp\
     gradientwindow.cpp \
     morphologywindow.cpp \
     thresholdwindow.cpp \
-    image.cpp
+    image.cpp \
+    imagelabel.cpp
 
 HEADERS  += mainwindow.h \
     mat2qimage.h \
@@ -43,7 +44,8 @@ HEADERS  += mainwindow.h \
     gradientwindow.h \
     morphologywindow.h \
     thresholdwindow.h \
-    image.h
+    image.h \
+    imagelabel.h
 
 FORMS    += mainwindow.ui \
     aboutwindow.ui \

@@ -34,6 +34,9 @@ Image::Image(QString pathToImage, QWidget *parent) :
   timer.setSingleShot(true);
   connect(&timer, SIGNAL(timeout()),
           this,   SLOT(rescale()));
+
+  connect(ui->imageLabel, SIGNAL(hover(int,int)),
+          this,           SLOT(info(int,int)));
 }
 
 Image::Image(cv::Mat const& image, QWidget *parent) :
@@ -48,6 +51,9 @@ Image::Image(cv::Mat const& image, QWidget *parent) :
   timer.setSingleShot(true);
   connect(&timer, SIGNAL(timeout()),
           this,   SLOT(rescale()));
+
+  connect(ui->imageLabel, SIGNAL(hover(int,int)),
+          this,           SLOT(info(int,int)));
 }
 
 Image::~Image()
@@ -132,29 +138,77 @@ void Image::update() const
   QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
 
   if (ui->fitToScreenCheckBox->isChecked())
-    pixmap = pixmap.scaled(ui->displayLabel->size(), Qt::KeepAspectRatio);
+    pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
 
-  ui->displayLabel->setPixmap(pixmap);
-}
-
-void Image::on_fitToScreenCheckBox_toggled()
-{
-  if (ui->fitToScreenCheckBox->isChecked()) {
-    ui->displayLabel->clear();
-
-    timer.start(5);
-  } else {
-    QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
-
-    ui->displayLabel->setPixmap(pixmap);
-  }
+  ui->imageLabel->setPixmap(pixmap);
 }
 
 void Image::rescale() const
 {
   QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
 
-  pixmap = pixmap.scaled(ui->displayLabel->size(), Qt::KeepAspectRatio);
+  pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
 
-  ui->displayLabel->setPixmap(pixmap);
+  ui->imageLabel->setPixmap(pixmap);
+}
+
+void Image::on_fitToScreenCheckBox_toggled()
+{
+  if (ui->fitToScreenCheckBox->isChecked()) {
+    ui->imageLabel->clear();
+
+    timer.start(10);
+  } else {
+    QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
+
+    ui->imageLabel->setPixmap(pixmap);
+  }
+}
+
+void Image::info(int x, int y) const
+{
+  int imageHeight = current.rows;
+  int imageWidth = current.cols;
+
+  int labelHeight = ui->imageLabel->height();
+  int labelWidth = ui->imageLabel->width();
+
+  if (ui->fitToScreenCheckBox->isChecked()) {
+    int scaledImageWidth, scaledImageHeight;
+
+    if (labelWidth * imageHeight > imageWidth * labelHeight) {
+      scaledImageWidth = imageWidth * labelHeight / imageHeight;
+      scaledImageHeight = labelHeight;
+    } else {
+      scaledImageWidth = labelWidth;
+      scaledImageHeight = imageHeight * labelWidth / imageWidth;
+    }
+
+    x = (x - (labelWidth - scaledImageWidth) / 2) * imageWidth / scaledImageWidth;
+    y = (y - (labelHeight - scaledImageHeight) / 2) * imageHeight / scaledImageHeight;
+  } else if (imageWidth < labelWidth && imageHeight < labelHeight) {
+    x -= (labelWidth - imageWidth) / 2;
+    y -= (labelHeight - imageHeight) / 2;
+  }
+
+  if (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
+    ui->xLabel->setText(QString::number(x));
+    ui->yLabel->setText(QString::number(y));
+
+    switch(current.channels()) {
+      case 1:
+        ui->valueLabel->setText(QString::number(current.at<quint8>(y, x)));
+        break;
+      case 3:
+        cv::Vec3b bgr = current.at<cv::Vec3b>(y, x);
+        ui->valueLabel->setText("(" + QString::number(bgr[2]) +
+                                ", " + QString::number(bgr[1]) +
+                                ", " + QString::number(bgr[0]) + ")");
+        break;
+    }
+  } else {
+    ui->xLabel->setText("-");
+    ui->yLabel->setText("-");
+    ui->valueLabel->setText("-");
+  }
 }
