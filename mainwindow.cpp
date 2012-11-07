@@ -24,10 +24,21 @@
 
 #include "histogram.h"
 #include "mat2qimage.h"
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include "aboutwindow.h"
+#include "blurwindow.h"
+#include "cannywindow.h"
+#include "gradientwindow.h"
+#include "histogramwindow.h"
+#include "morphologywindow.h"
+#include "thresholdwindow.h"
 
 // TODO: Batch processing
 // TODO: Channels merge
-// TODO: Image "feedback"
 // TODO: Macroing
 // TODO: Particle counting
 // TODO: Region of Interest (a.k.a. masking)

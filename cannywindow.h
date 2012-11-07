@@ -17,12 +17,11 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef CANNYWINDOW_H
-#define CANNYWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include "image.h"
+class Image;
 
 namespace Ui {
   class CannyWindow;
@@ -67,5 +66,3 @@ class CannyWindow : public QMainWindow
     double calculateMean();
     double calculateMedian();
 };
-
-#endif // CANNYWINDOW_H

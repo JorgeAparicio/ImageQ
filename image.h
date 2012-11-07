@@ -17,13 +17,12 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGE_H
-#define IMAGE_H
+#pragma once
 
 #include <QWidget>
 #include <QTimer>
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 
 namespace Ui {
   class Image;
@@ -60,5 +59,3 @@ class Image : public QWidget
     cv::Mat first;
     QTimer timer;
 };
-
-#endif // IMAGE_H

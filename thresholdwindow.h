@@ -17,15 +17,15 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef THRESHOLDWINDOW_H
-#define THRESHOLDWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include <qwt_plot_marker.h>
-
-#include "image.h"
 #include "histogram.h"
+
+class Image;
+
+class QwtPlotMarker;
 
 namespace Ui {
   class ThresholdWindow;
@@ -73,5 +73,3 @@ class ThresholdWindow : public QMainWindow
 
     void threshold();
 };
-
-#endif // THRESHOLDWINDOW_H

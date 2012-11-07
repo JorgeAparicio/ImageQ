@@ -17,8 +17,7 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef IMAGELABEL_H
-#define IMAGELABEL_H
+#pragma once
 
 #include <QLabel>
 
@@ -37,5 +36,3 @@ class ImageLabel : public QLabel
   public slots:
     
 };
-
-#endif // IMAGELABEL_H

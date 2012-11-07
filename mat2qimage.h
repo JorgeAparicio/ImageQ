@@ -17,12 +17,12 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MAT2QIMAGE_H
-#define MAT2QIMAGE_H
+#pragma once
 
 #include <QImage>
-#include <opencv2/opencv.hpp>
+
+namespace cv {
+  class Mat;
+}
 
 QImage Mat2QImage(cv::Mat const&);
-
-#endif // MAT2QIMAGE_H

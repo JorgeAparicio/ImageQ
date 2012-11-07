@@ -22,6 +22,9 @@
 
 #include "mat2qimage.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 Image::Image(QString pathToImage, QWidget *parent) :
   QWidget(parent),
   ui(new Ui::Image),

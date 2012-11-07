@@ -19,6 +19,8 @@
 
 #include "mat2qimage.h"
 
+#include <opencv2/core/core.hpp>
+
 QImage Mat2QImage(cv::Mat const& src)
 {
   QImage dest(src.cols, src.rows, QImage::Format_ARGB32);

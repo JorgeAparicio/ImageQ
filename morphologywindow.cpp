@@ -21,6 +21,9 @@
 #include "ui_morphologywindow.h"
 
 #include "mat2qimage.h"
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
 
 MorphologyWindow::MorphologyWindow(Image* image,
                                    QWidget *parent) :

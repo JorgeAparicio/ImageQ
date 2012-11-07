@@ -17,8 +17,7 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ABOUTWINDOW_H
-#define ABOUTWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
@@ -37,5 +36,3 @@ class AboutWindow : public QMainWindow
   private:
     Ui::AboutWindow *ui;
 };
-
-#endif // ABOUTWINDOW_H

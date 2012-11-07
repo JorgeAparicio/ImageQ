@@ -17,22 +17,19 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include <opencv2/opencv.hpp>
+class Image;
 
-#include "image.h"
-
-#include "aboutwindow.h"
-#include "blurwindow.h"
-#include "cannywindow.h"
-#include "gradientwindow.h"
-#include "histogramwindow.h"
-#include "morphologywindow.h"
-#include "thresholdwindow.h"
+class AboutWindow;
+class BlurWindow;
+class CannyWindow;
+class GradientWindow;
+class HistogramWindow;
+class MorphologyWindow;
+class ThresholdWindow;
 
 namespace Ui {
   class MainWindow;
@@ -80,5 +77,3 @@ class MainWindow : public QMainWindow
     MorphologyWindow *morphologyWindow;
     ThresholdWindow *thresholdWindow;
 };
-
-#endif // MAINWINDOW_H

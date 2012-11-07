@@ -20,6 +20,10 @@
 #include "gradientwindow.h"
 #include "ui_gradientwindow.h"
 
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+
 GradientWindow::GradientWindow(Image* image,
                                QWidget *parent) :
   QMainWindow(parent),

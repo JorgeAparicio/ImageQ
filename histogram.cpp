@@ -19,6 +19,9 @@
 
 #include "histogram.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 Histogram::Histogram(cv::Mat const& image, int const numberOfBins)
 {
   cv::Mat histogram;

@@ -17,17 +17,16 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef HISTOGRAM_H
-#define HISTOGRAM_H
-
-#include <opencv2/opencv.hpp>
+#pragma once
 
 #include <qwt_plot_histogram.h>
+
+namespace cv {
+  class Mat;
+}
 
 class Histogram : public QwtPlotHistogram
 {
   public:
     Histogram(cv::Mat const&, int const);
 };
-
-#endif // HISTOGRAM_H

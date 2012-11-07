@@ -20,6 +20,10 @@
 #include "blurwindow.h"
 #include "ui_blurwindow.h"
 
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+
 BlurWindow::BlurWindow(Image* image,
                        QWidget *parent) :
   QMainWindow(parent),

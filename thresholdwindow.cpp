@@ -20,6 +20,12 @@
 #include "thresholdwindow.h"
 #include "ui_thresholdwindow.h"
 
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <qwt_plot_marker.h>
+
 ThresholdWindow::ThresholdWindow(Image* image,
                                  QWidget *parent) :
   QMainWindow(parent),

@@ -20,6 +20,10 @@
 #include "cannywindow.h"
 #include "ui_cannywindow.h"
 
+#include "image.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+
 CannyWindow::CannyWindow(Image* image,
                          QWidget *parent) :
   QMainWindow(parent),

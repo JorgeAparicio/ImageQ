@@ -17,12 +17,11 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BLURWINDOW_H
-#define BLURWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include "image.h"
+class Image;
 
 namespace Ui {
   class BlurWindow;
@@ -60,5 +59,3 @@ class BlurWindow : public QMainWindow
 
     void blur();
 };
-
-#endif // BLURWINDOW_H

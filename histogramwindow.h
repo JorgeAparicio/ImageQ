@@ -17,14 +17,15 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef HISTOGRAMWINDOW_H
-#define HISTOGRAMWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include <opencv2/opencv.hpp>
-
 #include "histogram.h"
+
+namespace cv {
+  class Mat;
+}
 
 namespace Ui {
   class HistogramWindow;
@@ -42,5 +43,3 @@ class HistogramWindow : public QMainWindow
     Ui::HistogramWindow *ui;
     Histogram histogram;
 };
-
-#endif // HISTOGRAMWINDOW_H

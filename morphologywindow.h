@@ -17,12 +17,13 @@
 * along with ImageQ. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MORPHOLOGYWINDOW_H
-#define MORPHOLOGYWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-#include "image.h"
+#include <opencv2/core/core.hpp>
+
+class Image;
 
 namespace Ui {
   class MorphologyWindow;
@@ -70,5 +71,3 @@ class MorphologyWindow : public QMainWindow
     void morphology();
     void updateStructuringElement();
 };
-
-#endif // MORPHOLOGYWINDOW_H
