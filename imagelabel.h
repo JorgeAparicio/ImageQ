@@ -29,9 +29,11 @@ class ImageLabel : public QLabel
     
   protected:
     void mouseMoveEvent(QMouseEvent *ev);
+    void resizeEvent(QResizeEvent *);
 
   signals:
     void hover(int x, int y);
+    void resized();
     
   public slots:
     

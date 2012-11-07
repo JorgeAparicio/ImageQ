@@ -31,3 +31,8 @@ void ImageLabel::mouseMoveEvent(QMouseEvent *ev)
 {
   emit hover(ev->x(), ev->y());
 }
+
+void ImageLabel::resizeEvent(QResizeEvent *)
+{
+  emit resized();
+}

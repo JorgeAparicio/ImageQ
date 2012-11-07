@@ -25,6 +25,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <QScrollBar>
+
 Image::Image(QString pathToImage, QWidget *parent) :
   QWidget(parent),
   ui(new Ui::Image),
@@ -34,12 +36,17 @@ Image::Image(QString pathToImage, QWidget *parent) :
 
   first.copyTo(current);
 
-  timer.setSingleShot(true);
-  connect(&timer, SIGNAL(timeout()),
-          this,   SLOT(rescale()));
-
   connect(ui->imageLabel, SIGNAL(hover(int,int)),
           this,           SLOT(info(int,int)));
+
+  connect(ui->imageLabel, SIGNAL(resized()),
+          this,           SLOT(rescale()));
+
+  connect(ui->scrollArea->horizontalScrollBar(),  SIGNAL(rangeChanged(int,int)),
+          this,                                   SLOT(rescale()));
+
+  connect(ui->scrollArea->verticalScrollBar(),  SIGNAL(rangeChanged(int,int)),
+          this,                                   SLOT(rescale()));
 }
 
 Image::Image(cv::Mat const& image, QWidget *parent) :
@@ -51,12 +58,17 @@ Image::Image(cv::Mat const& image, QWidget *parent) :
 
   first.copyTo(current);
 
-  timer.setSingleShot(true);
-  connect(&timer, SIGNAL(timeout()),
-          this,   SLOT(rescale()));
-
   connect(ui->imageLabel, SIGNAL(hover(int,int)),
           this,           SLOT(info(int,int)));
+
+  connect(ui->imageLabel, SIGNAL(resized()),
+          this,           SLOT(rescale()));
+
+  connect(ui->scrollArea->horizontalScrollBar(),  SIGNAL(rangeChanged(int,int)),
+          this,                                   SLOT(dummy(int,int)));
+
+  connect(ui->scrollArea->verticalScrollBar(),  SIGNAL(rangeChanged(int,int)),
+          this,                                   SLOT(dummy(int,int)));
 }
 
 Image::~Image()
@@ -109,7 +121,7 @@ void Image::undo()
 
 }
 
-void Image::update() const
+void Image::update()
 {
   double min, max;
   cv::minMaxLoc(current, &min, &max);
@@ -138,7 +150,12 @@ void Image::update() const
       break;
   }
 
-  QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
+  draw();
+}
+
+void Image::draw()
+{
+  pixmap = QPixmap::fromImage(Mat2QImage(current));
 
   if (ui->fitToScreenCheckBox->isChecked())
     pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
@@ -146,26 +163,29 @@ void Image::update() const
   ui->imageLabel->setPixmap(pixmap);
 }
 
-void Image::rescale() const
-{
-  QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
-
-  pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
-
-  ui->imageLabel->setPixmap(pixmap);
-}
-
-void Image::on_fitToScreenCheckBox_toggled()
+void Image::rescale()
 {
   if (ui->fitToScreenCheckBox->isChecked()) {
-    ui->imageLabel->clear();
-
-    timer.start(10);
-  } else {
-    QPixmap pixmap = QPixmap::fromImage(Mat2QImage(current));
-
-    ui->imageLabel->setPixmap(pixmap);
+    if (ui->scrollArea->horizontalScrollBar()->maximum() == 0 &&
+        ui->scrollArea->verticalScrollBar()->maximum() == 0 &&
+        pixmap.width() != ui->imageLabel->width() &&
+        pixmap.height() != ui->imageLabel->height()) {
+        draw();
+    } else if (pixmap.height() != 0 && pixmap.width() != 0) {
+      ui->imageLabel->clear();
+      pixmap = QPixmap();
+    }
   }
+}
+
+void Image::on_fitToScreenCheckBox_toggled(bool checked)
+{
+  if (checked &&
+      (ui->scrollArea->horizontalScrollBar()->maximum() != 0 ||
+       ui->scrollArea->verticalScrollBar()->maximum() != 0))
+    ui->imageLabel->clear();
+  else
+    draw();
 }
 
 void Image::info(int x, int y) const

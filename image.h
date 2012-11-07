@@ -47,15 +47,16 @@ class Image : public QWidget
     void undo();
 
   public slots:
-    void update() const;
-    void rescale() const;
+    void draw();
+    void update();
+    void rescale();
     void info(int x, int y) const;
-    
+
   private slots:
-    void on_fitToScreenCheckBox_toggled();
+    void on_fitToScreenCheckBox_toggled(bool checked);
 
   private:
     Ui::Image *ui;
     cv::Mat first;
-    QTimer timer;
+    QPixmap pixmap;
 };
