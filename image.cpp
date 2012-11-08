@@ -293,10 +293,11 @@ void Image::rescale()
 {
   if (ui->fitToScreenCheckBox->isChecked()) {
     if (ui->scrollArea->horizontalScrollBar()->maximum() == 0 &&
-        ui->scrollArea->verticalScrollBar()->maximum() == 0 &&
-        pixmap.width() != ui->imageLabel->width() &&
-        pixmap.height() != ui->imageLabel->height()) {
-      display();
+        ui->scrollArea->verticalScrollBar()->maximum() == 0) {
+      if (pixmap.width() != ui->imageLabel->width() &&
+          pixmap.height() != ui->imageLabel->height()) {
+        display();
+      }
     } else if (pixmap.height() != 0 && pixmap.width() != 0) {
       ui->imageLabel->clear();
       pixmap = QPixmap();
