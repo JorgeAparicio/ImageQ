@@ -16,8 +16,6 @@ ImageQ currently provides the following operations:
 With ImageQ, you can see the effect of varying the parameters of these 
 operations on the go.
 
-For now, all images are converted to grayscale before processing.
-
 DEPENDENCIES
 ============
 
@@ -44,3 +42,8 @@ ImageQ source code is released under the terms of the GNU General Public
 License (GPL) version 3.
 
 See COPYING.GPL3.txt for more details.
+
+There are some samples images under the 'samples' folder, those files are
+licensed under Creative Commons or belong to the public domain.
+
+See samples/license.txt for more details.
