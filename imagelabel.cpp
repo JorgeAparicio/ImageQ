@@ -20,16 +20,31 @@
 #include "imagelabel.h"
 
 #include <QMouseEvent>
-
+#include <QDebug>
 ImageLabel::ImageLabel(QWidget *parent) :
   QLabel(parent)
 {
   this->setMouseTracking(true);
 }
 
+void ImageLabel::mouseDoubleClickEvent(QMouseEvent *ev)
+{
+  emit mouseDoubleClick(ev->pos());
+}
+
 void ImageLabel::mouseMoveEvent(QMouseEvent *ev)
 {
-  emit hover(ev->x(), ev->y());
+  emit mouseHover(ev->pos());
+}
+
+void ImageLabel::mousePressEvent(QMouseEvent *ev)
+{
+  emit mousePress(ev->pos());
+}
+
+void ImageLabel::mouseReleaseEvent(QMouseEvent *ev)
+{
+  emit mouseRelease(ev->pos());
 }
 
 void ImageLabel::resizeEvent(QResizeEvent *)

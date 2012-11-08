@@ -28,11 +28,17 @@ class ImageLabel : public QLabel
     explicit ImageLabel(QWidget *parent = 0);
     
   protected:
+    void mouseDoubleClickEvent(QMouseEvent *ev);
     void mouseMoveEvent(QMouseEvent *ev);
+    void mousePressEvent(QMouseEvent *ev);
+    void mouseReleaseEvent(QMouseEvent *ev);
     void resizeEvent(QResizeEvent *);
 
   signals:
-    void hover(int x, int y);
+    void mouseDoubleClick(QPoint p);
+    void mouseHover(QPoint p);
+    void mousePress(QPoint p);
+    void mouseRelease(QPoint p);
     void resized();
     
   public slots:

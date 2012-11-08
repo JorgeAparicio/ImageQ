@@ -123,6 +123,7 @@
      </property>
      <addaction name="actionGrayscale"/>
     </widget>
+    <addaction name="actionCrop"/>
     <addaction name="menuSplit"/>
     <addaction name="menuTo"/>
    </widget>
@@ -221,6 +222,11 @@
   <action name="actionGrayscale">
    <property name="text">
     <string>Grayscale</string>
+   </property>
+  </action>
+  <action name="actionCrop">
+   <property name="text">
+    <string>Crop</string>
    </property>
   </action>
  </widget>

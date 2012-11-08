@@ -26,27 +26,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <QScrollBar>
+#include <QPainter>
 
 Image::Image(QString pathToImage, QWidget *parent) :
   QWidget(parent),
   ui(new Ui::Image),
   first(cv::imread(pathToImage.toStdString()))
 {
-  ui->setupUi(this);
-
-  first.copyTo(current);
-
-  connect(ui->imageLabel, SIGNAL(hover(int,int)),
-          this,           SLOT(info(int,int)));
-
-  connect(ui->imageLabel, SIGNAL(resized()),
-          this,           SLOT(rescale()));
-
-  connect(ui->scrollArea->horizontalScrollBar(),  SIGNAL(rangeChanged(int,int)),
-          this,                                   SLOT(rescale()));
-
-  connect(ui->scrollArea->verticalScrollBar(),  SIGNAL(rangeChanged(int,int)),
-          this,                                   SLOT(rescale()));
+  initialize();
 }
 
 Image::Image(cv::Mat const& image, QWidget *parent) :
@@ -54,21 +41,43 @@ Image::Image(cv::Mat const& image, QWidget *parent) :
   ui(new Ui::Image),
   first(image)
 {
+  initialize();
+}
+
+void Image::initialize()
+{
   ui->setupUi(this);
 
   first.copyTo(current);
 
-  connect(ui->imageLabel, SIGNAL(hover(int,int)),
-          this,           SLOT(info(int,int)));
+  color = QColor(Qt::red);
+
+  mousePressed = false;
+  selectionMode = None;
+
+  connect(ui->imageLabel, SIGNAL(mouseHover(QPoint)),
+          this,           SLOT(pixelInfo(QPoint)));
+
+  connect(ui->imageLabel, SIGNAL(mouseHover(QPoint)),
+          this,           SLOT(mouseMove(QPoint)));
+
+  connect(ui->imageLabel, SIGNAL(mouseDoubleClick(QPoint)),
+          this,           SLOT(mouseDoubleClick(QPoint)));
+
+  connect(ui->imageLabel, SIGNAL(mousePress(QPoint)),
+          this,           SLOT(mousePress(QPoint)));
+
+  connect(ui->imageLabel, SIGNAL(mouseRelease(QPoint)),
+          this,           SLOT(mouseRelease(QPoint)));
 
   connect(ui->imageLabel, SIGNAL(resized()),
           this,           SLOT(rescale()));
 
   connect(ui->scrollArea->horizontalScrollBar(),  SIGNAL(rangeChanged(int,int)),
-          this,                                   SLOT(dummy(int,int)));
+          this,                                   SLOT(rescale()));
 
   connect(ui->scrollArea->verticalScrollBar(),  SIGNAL(rangeChanged(int,int)),
-          this,                                   SLOT(dummy(int,int)));
+          this,                                 SLOT(rescale()));
 }
 
 Image::~Image()
@@ -121,6 +130,197 @@ void Image::undo()
 
 }
 
+void Image::display()
+{
+  pixmap = QPixmap::fromImage(Mat2QImage(current));
+
+  if (ui->fitToScreenCheckBox->isChecked())
+    pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
+
+  ui->imageLabel->setPixmap(pixmap);
+}
+
+void Image::pixelInfo(QPoint p) const
+{
+  remapPoint(p);
+
+  ui->xLabel->setText(QString::number(p.x()));
+  ui->yLabel->setText(QString::number(p.y()));
+
+  switch(current.channels()) {
+    case 1:
+      ui->valueLabel->setText(QString::number(current.at<quint8>(p.y(), p.x())));
+      break;
+    case 3:
+      cv::Vec3b bgr = current.at<cv::Vec3b>(p.y(), p.x());
+      ui->valueLabel->setText("(" + QString::number(bgr[2]) +
+                              ", " + QString::number(bgr[1]) +
+                              ", " + QString::number(bgr[0]) + ")");
+      break;
+  }
+}
+
+void Image::mouseDoubleClick(QPoint p)
+{
+  remapPoint(p);
+
+  switch (selectionMode) {
+    case None:
+      break;
+
+    case Line:
+      break;
+
+    case Rectangle:
+      if (rect.topLeft().x() <= p.x() && p.x() <= rect.bottomRight().x() &&
+          rect.topLeft().y() <= p.y() && p.y() <= rect.bottomRight().y()) {
+        selectionMode = None;
+        emit rectangleSelected(rect);
+      } else {
+        emit status("Drag-select an area.");
+      }
+      break;
+  }
+
+  p1 = QPoint(-1, -1);
+  p2 = QPoint(-1, -1);
+
+  ui->imageLabel->setPixmap(pixmap);
+}
+
+void Image::mouseMove(QPoint p)
+{
+  if (selectionMode != None) {
+    remapPoint(p);
+
+    if (mousePressed) {
+      p2 = p;
+
+      overlayedPixmap = pixmap;
+      color.setAlpha(128);
+
+      QPainter painter(&overlayedPixmap);
+      painter.setPen(color);
+
+      switch (selectionMode) {
+        case Rectangle:
+        {
+          QRect rect;
+
+          if (p1.x() < p2.x() || p1.y() < p2.y())
+            rect = QRect((p1 * pixmap.width()) / current.cols,
+                         (p2 * pixmap.height() / current.rows));
+          else
+            rect = QRect((p2 * pixmap.width()) / current.cols,
+                         (p1 * pixmap.height() / current.rows));
+
+          painter.drawRect(rect);
+          color.setAlpha(64);
+          painter.fillRect(rect, color);
+          break;
+        }
+
+        case Line:
+        {
+          QLine line((p1 * pixmap.width()) / current.cols,
+                     (p2 * pixmap.height() / current.rows));
+
+          painter.drawLine(line);
+          break;
+        }
+
+        case None:
+          break;
+      }
+
+      ui->imageLabel->setPixmap(overlayedPixmap);
+    }
+  }
+}
+
+void Image::mousePress(QPoint p)
+{
+  if (selectionMode != None) {
+    remapPoint(p);
+
+    mousePressed = true;
+
+    p1 = p;
+    p2 = QPoint(-1, -1);
+  }
+}
+
+void Image::mouseRelease(QPoint p)
+{
+  if (selectionMode != None) {
+    remapPoint(p);
+
+    mousePressed = false;
+
+    p2 = p;
+
+    if (p1.x() >= 0 && p1.y() >= 0 && p1.x() != p2.x() && p1.y() != p2.y())
+      switch (selectionMode) {
+        case None:
+          break;
+
+        case Line:
+          break;
+
+        case Rectangle:
+          emit status("Double-click inside the area to crop.");
+
+          if (p1.x() < p2.x() || p1.y() < p2.y())
+            rect = QRect(p1, p2);
+          else
+            rect = QRect(p2, p1);
+          break;
+      }
+  }
+}
+
+void Image::on_fitToScreenCheckBox_toggled(bool checked)
+{
+  if (checked &&
+      (ui->scrollArea->horizontalScrollBar()->maximum() != 0 ||
+       ui->scrollArea->verticalScrollBar()->maximum() != 0))
+    ui->imageLabel->clear();
+  else
+    display();
+}
+
+void Image::rescale()
+{
+  if (ui->fitToScreenCheckBox->isChecked()) {
+    if (ui->scrollArea->horizontalScrollBar()->maximum() == 0 &&
+        ui->scrollArea->verticalScrollBar()->maximum() == 0 &&
+        pixmap.width() != ui->imageLabel->width() &&
+        pixmap.height() != ui->imageLabel->height()) {
+      display();
+    } else if (pixmap.height() != 0 && pixmap.width() != 0) {
+      ui->imageLabel->clear();
+      pixmap = QPixmap();
+    }
+  }
+}
+
+void Image::setSelectionMode(SelectionMode mode)
+{
+  selectionMode = mode;
+
+  switch (mode) {
+    case None:
+      break;
+
+    case Line:
+      break;
+
+    case Rectangle:
+      emit status("Drag-select an area.");
+      break;
+  }
+}
+
 void Image::update()
 {
   double min, max;
@@ -150,46 +350,14 @@ void Image::update()
       break;
   }
 
-  draw();
+  display();
 }
 
-void Image::draw()
+void Image::remapPoint(QPoint &p) const
 {
-  pixmap = QPixmap::fromImage(Mat2QImage(current));
+  int x = p.x();
+  int y = p.y();
 
-  if (ui->fitToScreenCheckBox->isChecked())
-    pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
-
-  ui->imageLabel->setPixmap(pixmap);
-}
-
-void Image::rescale()
-{
-  if (ui->fitToScreenCheckBox->isChecked()) {
-    if (ui->scrollArea->horizontalScrollBar()->maximum() == 0 &&
-        ui->scrollArea->verticalScrollBar()->maximum() == 0 &&
-        pixmap.width() != ui->imageLabel->width() &&
-        pixmap.height() != ui->imageLabel->height()) {
-        draw();
-    } else if (pixmap.height() != 0 && pixmap.width() != 0) {
-      ui->imageLabel->clear();
-      pixmap = QPixmap();
-    }
-  }
-}
-
-void Image::on_fitToScreenCheckBox_toggled(bool checked)
-{
-  if (checked &&
-      (ui->scrollArea->horizontalScrollBar()->maximum() != 0 ||
-       ui->scrollArea->verticalScrollBar()->maximum() != 0))
-    ui->imageLabel->clear();
-  else
-    draw();
-}
-
-void Image::info(int x, int y) const
-{
   int imageHeight = current.rows;
   int imageWidth = current.cols;
 
@@ -214,24 +382,16 @@ void Image::info(int x, int y) const
     y -= (labelHeight - imageHeight) / 2;
   }
 
-  if (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
-    ui->xLabel->setText(QString::number(x));
-    ui->yLabel->setText(QString::number(y));
+  if (x < 0)
+    x = 0;
+  else if (x >= imageWidth)
+    x = imageWidth - 1;
 
-    switch(current.channels()) {
-      case 1:
-        ui->valueLabel->setText(QString::number(current.at<quint8>(y, x)));
-        break;
-      case 3:
-        cv::Vec3b bgr = current.at<cv::Vec3b>(y, x);
-        ui->valueLabel->setText("(" + QString::number(bgr[2]) +
-                                ", " + QString::number(bgr[1]) +
-                                ", " + QString::number(bgr[0]) + ")");
-        break;
-    }
-  } else {
-    ui->xLabel->setText("-");
-    ui->yLabel->setText("-");
-    ui->valueLabel->setText("-");
-  }
+  if (y < 0)
+    y = 0;
+  else if (y >= imageHeight)
+    y = imageHeight - 1;
+
+  p.setX(x);
+  p.setY(y);
 }

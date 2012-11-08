@@ -33,6 +33,10 @@ class Image : public QWidget
     Q_OBJECT
     
   public:
+    enum SelectionMode {
+      None, Line, Rectangle
+    };
+
     explicit Image(QString pathToImage, QWidget *parent = 0);
     explicit Image(cv::Mat const& image, QWidget *parent = 0);
     ~Image();
@@ -46,17 +50,32 @@ class Image : public QWidget
     void RGB(std::vector<cv::Mat>& rgb) const;
     void undo();
 
-  public slots:
-    void draw();
-    void update();
-    void rescale();
-    void info(int x, int y) const;
+  signals:
+    void rectangleSelected(QRect rect);
+    void status(QString const& msg);
 
-  private slots:
+  public slots:
+    void display();
+    void pixelInfo(QPoint p) const;
+    void mouseDoubleClick(QPoint p);
+    void mouseMove(QPoint p);
+    void mousePress(QPoint p);
+    void mouseRelease(QPoint p);
     void on_fitToScreenCheckBox_toggled(bool checked);
+    void rescale();
+    void setSelectionMode(SelectionMode mode);
+    void update();
 
   private:
     Ui::Image *ui;
     cv::Mat first;
-    QPixmap pixmap;
+    QPixmap pixmap, overlayedPixmap;
+    QPoint p1, p2;
+    QRect rect;
+    QColor color;
+    bool mousePressed;
+    SelectionMode selectionMode;
+
+    void remapPoint(QPoint &p) const;
+    void initialize();
 };

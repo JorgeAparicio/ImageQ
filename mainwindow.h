@@ -47,6 +47,7 @@ class MainWindow : public QMainWindow
     void on_actionAbout_triggered();
     void on_actionBlur_triggered();
     void on_actionCanny_triggered();
+    void on_actionCrop_triggered();
     void on_actionClose_triggered();
     void on_actionEqualize_triggered();
     void on_actionGradient_triggered();
@@ -65,6 +66,8 @@ class MainWindow : public QMainWindow
 
     void on_imagesTabWidget_currentChanged(QWidget *image);
     void on_imagesTabWidget_tabCloseRequested(int index);
+
+    void crop(QRect rect);
 
   private:
     Ui::MainWindow *ui;

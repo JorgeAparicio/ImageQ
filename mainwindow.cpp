@@ -41,7 +41,6 @@
 // TODO: Channels merge
 // TODO: Macroing
 // TODO: Particle counting
-// TODO: Region of Interest (a.k.a. masking)
 // TODO: Video processing...?
 // TODO: Watershed
 
@@ -58,7 +57,6 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
 
   ui->mainToolBar->hide();
-  ui->statusBar->hide();
 
   this->showMaximized();
 }
@@ -90,6 +88,21 @@ void MainWindow::on_actionCanny_triggered()
 
     if (image->current.channels() == 1)
       cannyWindow = new CannyWindow(image, this);
+  }
+}
+
+void MainWindow::on_actionCrop_triggered()
+{
+  if (ui->imagesTabWidget->currentIndex() != -1) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+
+    connect(image, SIGNAL(rectangleSelected(QRect)),
+            this,  SLOT(crop(QRect)));
+
+    connect(image,          SIGNAL(status(QString)),
+            ui->statusBar,  SLOT(showMessage(QString)));
+
+    image->setSelectionMode(Image::Rectangle);
   }
 }
 
@@ -340,4 +353,27 @@ void MainWindow::on_imagesTabWidget_tabCloseRequested(int index)
 
   delete images.at(index);
   images.remove(index);
+}
+
+void MainWindow::crop(QRect rect)
+{
+  int index = ui->imagesTabWidget->currentIndex();
+  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  QString name = ui->imagesTabWidget->tabText(index);
+
+  cv::Rect roi(rect.x(), rect.y(), rect.width(), rect.height());
+  cv::Mat mat = image->current(roi);
+
+  Image* newImage = new Image(mat, this);
+  images.push_back(newImage);
+
+  ui->imagesTabWidget->insertTab(++index, newImage, name + " (crop)");
+
+  disconnect(image, SIGNAL(rectangleSelected(QRect)),
+             this,  SLOT(crop(QRect)));
+
+  disconnect(image,       SIGNAL(status(QString)),
+          ui->statusBar,  SLOT(showMessage(QString)));
+
+  ui->statusBar->clearMessage();
 }
