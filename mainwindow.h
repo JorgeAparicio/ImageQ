@@ -30,6 +30,7 @@ class GradientWindow;
 class HistogramWindow;
 class MorphologyWindow;
 class ThresholdWindow;
+class SetScaleWindow;
 
 namespace Ui {
   class MainWindow;
@@ -60,6 +61,7 @@ class MainWindow : public QMainWindow
     void on_actionRevert_triggered();
     void on_actionRGB_triggered();
     void on_actionSave_triggered();
+    void on_actionSet_Scale_triggered();
     void on_actionStretch_triggered();
     void on_actionThreshold_triggered();
     void on_actionUndo_triggered();
@@ -79,4 +81,5 @@ class MainWindow : public QMainWindow
     HistogramWindow *histogramWindow;
     MorphologyWindow *morphologyWindow;
     ThresholdWindow *thresholdWindow;
+    SetScaleWindow *setScaleWindow;
 };

@@ -43,6 +43,8 @@ class Image : public QWidget
 
     cv::Mat current;
     cv::Mat previous;
+    float conversion;
+    QString unit;
 
     void backup();
     void HSV(std::vector<cv::Mat>& hsv) const;
@@ -51,7 +53,8 @@ class Image : public QWidget
     void undo();
 
   signals:
-    void rectangleSelected(QRect rect);
+    void lineSelected(QLine const& line);
+    void rectangleSelected(QRect const& rect);
     void status(QString const& msg);
 
   public slots:

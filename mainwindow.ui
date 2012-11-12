@@ -127,10 +127,19 @@
     <addaction name="menuSplit"/>
     <addaction name="menuTo"/>
    </widget>
+   <widget class="QMenu" name="menuMeasure">
+    <property name="title">
+     <string>Measure</string>
+    </property>
+    <addaction name="actionSet_Scale"/>
+    <addaction name="actionDistance"/>
+    <addaction name="actionParticles"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuImage"/>
    <addaction name="menuProcess"/>
+   <addaction name="menuMeasure"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -227,6 +236,21 @@
   <action name="actionCrop">
    <property name="text">
     <string>Crop</string>
+   </property>
+  </action>
+  <action name="actionSet_Scale">
+   <property name="text">
+    <string>Set Scale</string>
+   </property>
+  </action>
+  <action name="actionDistance">
+   <property name="text">
+    <string>Distance</string>
+   </property>
+  </action>
+  <action name="actionParticles">
+   <property name="text">
+    <string>Particles</string>
    </property>
   </action>
  </widget>

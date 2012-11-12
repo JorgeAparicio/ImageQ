@@ -36,6 +36,7 @@
 #include "histogramwindow.h"
 #include "morphologywindow.h"
 #include "thresholdwindow.h"
+#include "setscalewindow.h"
 
 // TODO: Batch processing
 // TODO: Channels merge
@@ -308,6 +309,18 @@ void MainWindow::on_actionSave_triggered()
 
       cv::imwrite(filename.toStdString(), image->current, qualityType);
     }
+  }
+}
+
+void MainWindow::on_actionSet_Scale_triggered()
+{
+  if (images.size() > 0) {
+    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+
+    setScaleWindow = new SetScaleWindow(image, this);
+
+    connect(image,          SIGNAL(status(QString)),
+            ui->statusBar,  SLOT(showMessage(QString)));
   }
 }
 

@@ -54,6 +54,8 @@ void Image::initialize()
 
   mousePressed = false;
   selectionMode = None;
+  conversion = 1;
+  unit = 'm';
 
   connect(ui->imageLabel, SIGNAL(mouseHover(QPoint)),
           this,           SLOT(pixelInfo(QPoint)));
@@ -259,12 +261,13 @@ void Image::mouseRelease(QPoint p)
 
     p2 = p;
 
-    if (p1.x() >= 0 && p1.y() >= 0 && p1.x() != p2.x() && p1.y() != p2.y())
+    if (p1.x() >= 0 && p1.y() >= 0 && (p1.x() != p2.x() || p1.y() != p2.y()))
       switch (selectionMode) {
         case None:
           break;
 
         case Line:
+          emit lineSelected(QLine(p1, p2));
           break;
 
         case Rectangle:
@@ -314,6 +317,7 @@ void Image::setSelectionMode(SelectionMode mode)
       break;
 
     case Line:
+      emit status("Drag-draw a line.");
       break;
 
     case Rectangle:
