@@ -247,7 +247,8 @@ void MainWindow::on_actionMorphology_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-  QString filename = QFileDialog::getOpenFileName(this, "Open");
+  QString filename = QFileDialog::getOpenFileName(this, "Open", QString(),
+                                                  "Image Files (*.png *.jpg *.bmp *.tif)");
 
   if (!filename.isEmpty()) {
     images.push_back(new Image(filename, this));
