@@ -112,6 +112,21 @@ void MainWindow::on_actionClose_triggered()
   this->close();
 }
 
+void MainWindow::on_actionDistance_triggered()
+{
+  if (images.size() > 0) {
+    Image *image = (Image*)ui->imagesTabWidget->currentWidget();
+
+    connect(image,  SIGNAL(lineSelected(QLine)),
+            this,   SLOT(measure(QLine)));
+
+    connect(image,          SIGNAL(status(QString)),
+            ui->statusBar,  SLOT(showMessage(QString)));
+
+    image->setSelectionMode(Image::Line);
+  }
+}
+
 void MainWindow::on_actionEqualize_triggered()
 {
   if (images.size() > 0) {
@@ -385,8 +400,28 @@ void MainWindow::crop(QRect rect)
   disconnect(image, SIGNAL(rectangleSelected(QRect)),
              this,  SLOT(crop(QRect)));
 
-  disconnect(image,       SIGNAL(status(QString)),
-          ui->statusBar,  SLOT(showMessage(QString)));
+  disconnect(image,         SIGNAL(status(QString)),
+             ui->statusBar, SLOT(showMessage(QString)));
 
   ui->statusBar->clearMessage();
+}
+
+void MainWindow::measure(QLine line)
+{
+  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+
+  float distance = sqrt(pow(line.x1() - line.x2(), 2) +
+                        pow(line.y1() - line.y2(), 2)) * image->scale;
+
+  disconnect(image, SIGNAL(lineSelected(QLine)),
+             this,  SLOT(measure(QLine)));
+
+  disconnect(image,          SIGNAL(status(QString)),
+             ui->statusBar,  SLOT(showMessage(QString)));
+
+  ui->statusBar->showMessage("Distance: " +
+                             QString::number(distance, 'g', 6) +
+                             image->unit);
+
+  image->update();
 }

@@ -50,6 +50,7 @@ class MainWindow : public QMainWindow
     void on_actionCanny_triggered();
     void on_actionCrop_triggered();
     void on_actionClose_triggered();
+    void on_actionDistance_triggered();
     void on_actionEqualize_triggered();
     void on_actionGradient_triggered();
     void on_actionGrayscale_triggered();
@@ -70,6 +71,7 @@ class MainWindow : public QMainWindow
     void on_imagesTabWidget_tabCloseRequested(int index);
 
     void crop(QRect rect);
+    void measure(QLine line);
 
   private:
     Ui::MainWindow *ui;

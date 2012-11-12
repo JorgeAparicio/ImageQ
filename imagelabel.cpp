@@ -20,7 +20,7 @@
 #include "imagelabel.h"
 
 #include <QMouseEvent>
-#include <QDebug>
+
 ImageLabel::ImageLabel(QWidget *parent) :
   QLabel(parent)
 {

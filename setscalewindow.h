@@ -48,7 +48,7 @@ class SetScaleWindow : public QMainWindow
   private:
     Ui::SetScaleWindow *ui;
     Image* image;
-    float conversion;
+    float scale;
 
     void updateConversion();
     void showConversion() const;

@@ -33,7 +33,7 @@ SetScaleWindow::SetScaleWindow(Image* image,
 
   ui->unitLineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z]+")));
 
-  conversion = image->conversion;
+  scale = image->scale;
 
   showConversion();
 
@@ -70,7 +70,7 @@ void SetScaleWindow::on_selectPushButton_clicked()
 
 void SetScaleWindow::on_okPushButton_clicked()
 {
-  image->conversion = conversion;
+  image->scale = scale;
 
   this->close();
 }
@@ -87,20 +87,18 @@ void SetScaleWindow::on_lineSelected(QLine const& line)
   disconnect(image, SIGNAL(lineSelected(QLine const&)),
              this,  SLOT(on_lineSelected(QLine const&)));
 
-  image->setSelectionMode(Image::None);
-
   updateConversion();
 }
 
 void SetScaleWindow::showConversion() const
 {
-  ui->scaleLabel->setText(QString::number(conversion, 'g', 4) +
+  ui->scaleLabel->setText(QString::number(scale, 'g', 4) +
                           ' ' + image->unit);
 }
 
 void SetScaleWindow::updateConversion()
 {
-  conversion = ui->lengthSpinBox->value() / ui->pixelsLabel->text().toFloat();
+  scale = ui->lengthSpinBox->value() / ui->pixelsLabel->text().toFloat();
   image->unit = ui->unitLineEdit->text();
 
   showConversion();

@@ -54,7 +54,7 @@ void Image::initialize()
 
   mousePressed = false;
   selectionMode = None;
-  conversion = 1;
+  scale = 1;
   unit = 'm';
 
   connect(ui->imageLabel, SIGNAL(mouseHover(QPoint)),
@@ -171,6 +171,8 @@ void Image::mouseDoubleClick(QPoint p)
       break;
 
     case Line:
+      emit lineSelected(QLine(0, 0, 0, 0));
+      setSelectionMode(None);
       break;
 
     case Rectangle:
@@ -268,6 +270,7 @@ void Image::mouseRelease(QPoint p)
 
         case Line:
           emit lineSelected(QLine(p1, p2));
+          setSelectionMode(None);
           break;
 
         case Rectangle:
@@ -314,6 +317,7 @@ void Image::setSelectionMode(SelectionMode mode)
 
   switch (mode) {
     case None:
+      emit status("");
       break;
 
     case Line:

@@ -43,7 +43,7 @@ class Image : public QWidget
 
     cv::Mat current;
     cv::Mat previous;
-    float conversion;
+    float scale;
     QString unit;
 
     void backup();
