@@ -73,7 +73,8 @@ class MainWindow : public QMainWindow
     void crop(QRect rect);
     void disableOtherTabs();
     void enableAllTabs();
-    void measure(QLine line);
+    void measure(QLine line, QPoint center);
+    void finishMeasuring();
 
   private:
     Ui::MainWindow *ui;

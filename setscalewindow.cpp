@@ -80,6 +80,7 @@ void SetScaleWindow::on_lineSelected(QLine const& line)
   int distance = sqrt(pow(line.dx(), 2) + pow(line.dy(), 2)) + 1;
 
   ui->pixelsLabel->setText(QString::number(distance));
+  image->setSelectionMode(Image::None);
 
   this->show();
   image->update();

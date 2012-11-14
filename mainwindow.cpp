@@ -22,8 +22,6 @@
 
 #include <QFileDialog>
 
-#include "histogram.h"
-#include "mat2qimage.h"
 #include "image.h"
 
 #include <opencv2/imgproc/imgproc.hpp>
@@ -56,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
   thresholdWindow(0)
 {
   ui->setupUi(this);
-
+  qDebug() << "foo";
   ui->mainToolBar->hide();
 
   this->showMaximized();
@@ -109,6 +107,8 @@ void MainWindow::on_actionCrop_triggered()
   if (ui->imagesTabWidget->currentIndex() != -1) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
+    image->setFitToScreenCheckboxEnabled(false);
+
     connect(image, SIGNAL(rectangleSelected(QRect)),
             this,  SLOT(crop(QRect)));
 
@@ -129,11 +129,18 @@ void MainWindow::on_actionDistance_triggered()
   if (images.size() > 0) {
     Image *image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    connect(image,  SIGNAL(lineSelected(QLine)),
-            this,   SLOT(measure(QLine)));
+    disableOtherTabs();
+
+    image->setFitToScreenCheckboxEnabled(false);
+
+    connect(image,  SIGNAL(lineSelected(QLine, QPoint)),
+            this,   SLOT(measure(QLine, QPoint)));
 
     connect(image,          SIGNAL(status(QString)),
             ui->statusBar,  SLOT(showMessage(QString)));
+
+    connect(image, SIGNAL(exitSelectionMode()),
+            this,   SLOT(finishMeasuring()));
 
     image->setSelectionMode(Image::Line);
   }
@@ -435,13 +442,17 @@ void MainWindow::crop(QRect rect)
   Image* image = (Image*)ui->imagesTabWidget->currentWidget();
   QString name = ui->imagesTabWidget->tabText(index);
 
-  cv::Rect roi(rect.x(), rect.y(), rect.width(), rect.height());
-  cv::Mat mat = image->current(roi);
+  if (rect.width() != 0 && rect.height() != 0) {
+    cv::Rect roi(rect.x(), rect.y(), rect.width(), rect.height());
+    cv::Mat mat = image->current(roi);
 
-  Image* newImage = new Image(mat, this);
-  images.push_back(newImage);
+    Image* newImage = new Image(mat, this);
+    images.push_back(newImage);
 
-  ui->imagesTabWidget->insertTab(++index, newImage, name + " (crop)");
+    ui->imagesTabWidget->insertTab(++index, newImage, name + " (crop)");
+  }
+
+  image->setFitToScreenCheckboxEnabled(true);
 
   disconnect(image, SIGNAL(rectangleSelected(QRect)),
              this,  SLOT(crop(QRect)));
@@ -475,22 +486,35 @@ void MainWindow::enableAllTabs()
   }
 }
 
-void MainWindow::measure(QLine line)
+void MainWindow::measure(QLine line, QPoint center)
 {
   Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
   float distance = sqrt(pow(line.x1() - line.x2(), 2) +
                         pow(line.y1() - line.y2(), 2)) * image->scale;
 
-  disconnect(image, SIGNAL(lineSelected(QLine)),
-             this,  SLOT(measure(QLine)));
+  image->drawText(center, QString::number(distance) + ' ' + image->unit);
+
+  ui->statusBar->showMessage("Distance: " +
+                             QString::number(distance) +
+                             ' ' +
+                             image->unit);
+}
+
+void MainWindow::finishMeasuring()
+{
+  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+
+  image->setFitToScreenCheckboxEnabled(true);
+
+  enableAllTabs();
+
+  disconnect(image, SIGNAL(lineSelected(QLine, QPoint)),
+             this,  SLOT(measure(QLine, QPoint)));
 
   disconnect(image,          SIGNAL(status(QString)),
              ui->statusBar,  SLOT(showMessage(QString)));
 
-  ui->statusBar->showMessage("Distance: " +
-                             QString::number(distance, 'g', 6) +
-                             image->unit);
-
-  image->update();
+  disconnect(image, SIGNAL(exitSelectionMode()),
+             this,  SLOT(finishMeasuring()));
 }

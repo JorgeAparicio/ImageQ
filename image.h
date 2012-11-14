@@ -53,9 +53,14 @@ class Image : public QWidget
     void undo();
 
   signals:
-    void lineSelected(QLine const& line);
+    void exitSelectionMode();
+    void lineSelected(QLine const& line, QPoint center = QPoint());
     void rectangleSelected(QRect const& rect);
     void status(QString const& msg);
+
+  public:
+    void drawText(QPoint center, QString text);
+    void setFitToScreenCheckboxEnabled(bool enabled);
 
   public slots:
     void display();
@@ -72,7 +77,7 @@ class Image : public QWidget
   private:
     Ui::Image *ui;
     cv::Mat first;
-    QPixmap pixmap, overlayedPixmap;
+    QPixmap pixmap, tempPixmap, overlayedPixmap;
     QPoint p1, p2;
     QRect rect;
     QColor color;

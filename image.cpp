@@ -129,7 +129,21 @@ void Image::undo()
     previous.copyTo(current);
     update();
   }
+}
 
+void Image::drawText(QPoint center, QString text)
+{
+  QPainter p(&overlayedPixmap);
+  color.setAlpha(128);
+  p.setPen(color);
+  p.drawText(center, text);
+
+  ui->imageLabel->setPixmap(overlayedPixmap);
+}
+
+void Image::setFitToScreenCheckboxEnabled(bool enabled)
+{
+  ui->fitToScreenCheckBox->setEnabled(enabled);
 }
 
 void Image::display()
@@ -171,7 +185,7 @@ void Image::mouseDoubleClick(QPoint p)
       break;
 
     case Line:
-      emit lineSelected(QLine(0, 0, 0, 0));
+      emit lineSelected(QLine());
       setSelectionMode(None);
       break;
 
@@ -181,7 +195,8 @@ void Image::mouseDoubleClick(QPoint p)
         selectionMode = None;
         emit rectangleSelected(rect);
       } else {
-        emit status("Drag-select an area.");
+        selectionMode = None;
+        emit rectangleSelected(QRect());
       }
       break;
   }
@@ -200,10 +215,10 @@ void Image::mouseMove(QPoint p)
     if (mousePressed) {
       p2 = p;
 
-      overlayedPixmap = pixmap;
+      tempPixmap = overlayedPixmap;
       color.setAlpha(128);
 
-      QPainter painter(&overlayedPixmap);
+      QPainter painter(&tempPixmap);
       painter.setPen(color);
 
       switch (selectionMode) {
@@ -212,11 +227,11 @@ void Image::mouseMove(QPoint p)
           QRect rect;
 
           if (p1.x() < p2.x() || p1.y() < p2.y())
-            rect = QRect((p1 * pixmap.width()) / current.cols,
-                         (p2 * pixmap.height() / current.rows));
+            rect = QRect(p1 * pixmap.width() / current.cols,
+                         p2 * pixmap.height() / current.rows);
           else
-            rect = QRect((p2 * pixmap.width()) / current.cols,
-                         (p1 * pixmap.height() / current.rows));
+            rect = QRect(p2 * pixmap.width() / current.cols,
+                         p1 * pixmap.height() / current.rows);
 
           painter.drawRect(rect);
           color.setAlpha(64);
@@ -226,8 +241,8 @@ void Image::mouseMove(QPoint p)
 
         case Line:
         {
-          QLine line((p1 * pixmap.width()) / current.cols,
-                     (p2 * pixmap.height() / current.rows));
+          QLine line(p1 * pixmap.width() / current.cols,
+                     p2 * pixmap.height() / current.rows);
 
           painter.drawLine(line);
           break;
@@ -237,7 +252,7 @@ void Image::mouseMove(QPoint p)
           break;
       }
 
-      ui->imageLabel->setPixmap(overlayedPixmap);
+      ui->imageLabel->setPixmap(tempPixmap);
     }
   }
 }
@@ -269,8 +284,9 @@ void Image::mouseRelease(QPoint p)
           break;
 
         case Line:
-          emit lineSelected(QLine(p1, p2));
-          setSelectionMode(None);
+          overlayedPixmap = tempPixmap;
+          emit lineSelected(QLine(p1, p2),
+                            (p1 + p2) * pixmap.width() / (2 * current.cols));
           break;
 
         case Rectangle:
@@ -317,14 +333,19 @@ void Image::setSelectionMode(SelectionMode mode)
 
   switch (mode) {
     case None:
+      emit exitSelectionMode();
       emit status("");
       break;
 
     case Line:
-      emit status("Drag-draw a line.");
+      overlayedPixmap = pixmap;
+      tempPixmap = pixmap;
+      emit status("Drag-draw a line. Double-click to exit.");
       break;
 
     case Rectangle:
+      overlayedPixmap = pixmap;
+      tempPixmap = pixmap;
       emit status("Drag-select an area.");
       break;
   }
