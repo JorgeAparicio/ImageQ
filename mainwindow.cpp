@@ -298,9 +298,11 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionRevert_triggered()
 {
-  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-  image->revert();
+    image->revert();
+  }
 }
 
 void MainWindow::on_actionRGB_triggered()
@@ -406,9 +408,11 @@ void MainWindow::on_actionThreshold_triggered()
 
 void MainWindow::on_actionUndo_triggered()
 {
-  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  if (images.size() > 0) {
+    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-  image->undo();
+    image->undo();
+  }
 }
 
 void MainWindow::on_imagesTabWidget_currentChanged(QWidget *image)
