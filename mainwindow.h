@@ -71,6 +71,8 @@ class MainWindow : public QMainWindow
     void on_imagesTabWidget_tabCloseRequested(int index);
 
     void crop(QRect rect);
+    void disableOtherTabs();
+    void enableAllTabs();
     void measure(QLine line);
 
   private:

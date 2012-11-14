@@ -77,8 +77,14 @@ void MainWindow::on_actionBlur_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       blurWindow = new BlurWindow(image, this);
+
+      connect(blurWindow, SIGNAL(destroyed()),
+              this,       SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -87,8 +93,14 @@ void MainWindow::on_actionCanny_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       cannyWindow = new CannyWindow(image, this);
+
+      connect(cannyWindow,  SIGNAL(destroyed()),
+              this,         SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -147,8 +159,14 @@ void MainWindow::on_actionGradient_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       gradientWindow = new GradientWindow(image, this);
+
+      connect(gradientWindow, SIGNAL(destroyed()),
+              this,           SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -180,8 +198,14 @@ void MainWindow::on_actionHistogram_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       histogramWindow = new HistogramWindow(image->current, this);
+
+      connect(histogramWindow,  SIGNAL(destroyed()),
+              this,             SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -240,8 +264,14 @@ void MainWindow::on_actionMorphology_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)ui->imagesTabWidget->currentWidget();
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       morphologyWindow = new MorphologyWindow(image, this);
+
+      connect(morphologyWindow, SIGNAL(destroyed()),
+              this,             SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -333,7 +363,12 @@ void MainWindow::on_actionSet_Scale_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
 
+    disableOtherTabs();
+
     setScaleWindow = new SetScaleWindow(image, this);
+
+    connect(setScaleWindow, SIGNAL(destroyed()),
+            this,           SLOT(enableAllTabs()));
 
     connect(image,          SIGNAL(status(QString)),
             ui->statusBar,  SLOT(showMessage(QString)));
@@ -358,8 +393,14 @@ void MainWindow::on_actionThreshold_triggered()
   if (images.size() > 0) {
     Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
 
-    if (image->current.channels() == 1)
+    if (image->current.channels() == 1) {
+      disableOtherTabs();
+
       thresholdWindow = new ThresholdWindow(image, this);
+
+      connect(thresholdWindow,  SIGNAL(destroyed()),
+              this,             SLOT(enableAllTabs()));
+    }
   }
 }
 
@@ -405,6 +446,29 @@ void MainWindow::crop(QRect rect)
              ui->statusBar, SLOT(showMessage(QString)));
 
   ui->statusBar->clearMessage();
+}
+
+void MainWindow::disableOtherTabs()
+{
+  if (images.size() > 0) {
+    int index = ui->imagesTabWidget->currentIndex();
+
+    ui->imagesTabWidget->setTabsClosable(false);
+
+    for (int i = 0; i < ui->imagesTabWidget->count(); i++)
+      if (i != index)
+        ui->imagesTabWidget->setTabEnabled(i, false);
+  }
+}
+
+void MainWindow::enableAllTabs()
+{
+  if (images.size() > 0) {
+    ui->imagesTabWidget->setTabsClosable(true);
+
+    for (int i = 0; i < ui->imagesTabWidget->count(); i++)
+      ui->imagesTabWidget->setTabEnabled(i, true);
+  }
 }
 
 void MainWindow::measure(QLine line)
