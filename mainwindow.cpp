@@ -46,6 +46,7 @@
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow),
+  workingImage(0),
   aboutWindow(0),
   cannyWindow(0),
   gradientWindow(0),
@@ -54,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
   thresholdWindow(0)
 {
   ui->setupUi(this);
-  qDebug() << "foo";
+
   ui->mainToolBar->hide();
 
   this->showMaximized();
@@ -72,50 +73,54 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionBlur_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      blurWindow = new BlurWindow(image, this);
+      blurWindow = new BlurWindow(workingImage, this);
 
       connect(blurWindow, SIGNAL(destroyed()),
               this,       SLOT(enableAllTabs()));
+
+      connect(blurWindow, SIGNAL(destroyed()),
+              this,       SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionCanny_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      cannyWindow = new CannyWindow(image, this);
+      cannyWindow = new CannyWindow(workingImage, this);
 
       connect(cannyWindow,  SIGNAL(destroyed()),
               this,         SLOT(enableAllTabs()));
+
+      connect(cannyWindow,  SIGNAL(destroyed()),
+              this,         SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionCrop_triggered()
 {
-  if (ui->imagesTabWidget->currentIndex() != -1) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  if (workingImage) {
+    workingImage->setFitToScreenCheckboxEnabled(false);
+    disableOtherTabs();
+    setOperationsEnabled(false);
 
-    image->setFitToScreenCheckboxEnabled(false);
+    connect(workingImage, SIGNAL(rectangleSelected(QRect)),
+            this,         SLOT(crop(QRect)));
 
-    connect(image, SIGNAL(rectangleSelected(QRect)),
-            this,  SLOT(crop(QRect)));
-
-    connect(image,          SIGNAL(status(QString)),
+    connect(workingImage,   SIGNAL(status(QString)),
             ui->statusBar,  SLOT(showMessage(QString)));
 
-    image->setSelectionMode(Image::Rectangle);
+    workingImage->setSelectionMode(Image::Rectangle);
   }
 }
 
@@ -126,68 +131,64 @@ void MainWindow::on_actionClose_triggered()
 
 void MainWindow::on_actionDistance_triggered()
 {
-  if (images.size() > 0) {
-    Image *image = (Image*)ui->imagesTabWidget->currentWidget();
-
+  if (workingImage) {
+    workingImage->setFitToScreenCheckboxEnabled(false);
     disableOtherTabs();
+    setOperationsEnabled(false);
 
-    image->setFitToScreenCheckboxEnabled(false);
+    connect(workingImage, SIGNAL(lineSelected(QLine, QPoint)),
+            this,         SLOT(measure(QLine, QPoint)));
 
-    connect(image,  SIGNAL(lineSelected(QLine, QPoint)),
-            this,   SLOT(measure(QLine, QPoint)));
-
-    connect(image,          SIGNAL(status(QString)),
+    connect(workingImage,   SIGNAL(status(QString)),
             ui->statusBar,  SLOT(showMessage(QString)));
 
-    connect(image, SIGNAL(exitSelectionMode()),
-            this,   SLOT(finishMeasuring()));
+    connect(workingImage, SIGNAL(exitSelectionMode()),
+            this,         SLOT(finishMeasuring()));
 
-    image->setSelectionMode(Image::Line);
+    workingImage->setSelectionMode(Image::Line);
   }
 }
 
 void MainWindow::on_actionEqualize_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
+      workingImage->backup();
 
-    if (image->current.channels() == 1) {
-      image->backup();
+      cv::equalizeHist(workingImage->previous, workingImage->current);
 
-      cv::equalizeHist(image->previous, image->current);
-
-      image->update();
+      workingImage->update();
     }
   }
 }
 
 void MainWindow::on_actionGradient_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      gradientWindow = new GradientWindow(image, this);
+      gradientWindow = new GradientWindow(workingImage, this);
 
       connect(gradientWindow, SIGNAL(destroyed()),
               this,           SLOT(enableAllTabs()));
+
+      connect(gradientWindow, SIGNAL(destroyed()),
+              this,           SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionGrayscale_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
-
-    if (image->current.channels() == 3) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 3) {
       int index = ui->imagesTabWidget->currentIndex();
       QString name = ui->imagesTabWidget->tabText(index);
       cv::Mat grayscale;
 
-      cv::cvtColor(image->current, grayscale, CV_BGR2GRAY);
+      cv::cvtColor(workingImage->current, grayscale, CV_BGR2GRAY);
 
       Image* newImage = new Image(grayscale, this);
 
@@ -202,31 +203,31 @@ void MainWindow::on_actionGrayscale_triggered()
 
 void MainWindow::on_actionHistogram_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      histogramWindow = new HistogramWindow(image->current, this);
+      histogramWindow = new HistogramWindow(workingImage->current, this);
 
       connect(histogramWindow,  SIGNAL(destroyed()),
               this,             SLOT(enableAllTabs()));
+
+      connect(histogramWindow,  SIGNAL(destroyed()),
+              this,             SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionHSV_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
-
-    if (image->current.channels() == 3) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 3) {
       int index = ui->imagesTabWidget->currentIndex();
       QString name = ui->imagesTabWidget->tabText(index);
       std::vector<cv::Mat> hsv;
 
-      image->HSV(hsv);
+      workingImage->HSV(hsv);
 
       for (int i = 0; i < 3; i++) {
         QString newName;
@@ -253,39 +254,44 @@ void MainWindow::on_actionHSV_triggered()
 
 void MainWindow::on_actionInvert_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
+      workingImage->backup();
 
-    if (image->current.channels() == 1) {
-      image->backup();
+      workingImage->current = 255 - workingImage->current;
 
-      image->current = 255 - image->current;
-
-      image->update();
+      workingImage->update();
     }
   }
 }
 
 void MainWindow::on_actionMorphology_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      morphologyWindow = new MorphologyWindow(image, this);
+      morphologyWindow = new MorphologyWindow(workingImage, this);
 
       connect(morphologyWindow, SIGNAL(destroyed()),
               this,             SLOT(enableAllTabs()));
+
+      connect(morphologyWindow, SIGNAL(destroyed()),
+              this,             SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-  QString filename = QFileDialog::getOpenFileName(this, "Open", QString(),
-                                                  "Image Files (*.png *.jpg *.bmp *.tif)");
+  setOperationsEnabled(false);
+
+  QString filename =
+      QFileDialog::getOpenFileName(this, "Open", QString(),
+                                   "Image Files (*.png *.jpg *.bmp *.tif)");
+
+  setOperationsEnabled(true);
 
   if (!filename.isEmpty()) {
     images.push_back(new Image(filename, this));
@@ -305,24 +311,19 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionRevert_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    image->revert();
-  }
+  if (workingImage)
+    workingImage->revert();
 }
 
 void MainWindow::on_actionRGB_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
-
-    if (image->current.channels() == 3) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 3) {
       int index = ui->imagesTabWidget->currentIndex();
       QString name = ui->imagesTabWidget->tabText(index);
       std::vector<cv::Mat> rgb;
 
-      image->RGB(rgb);
+      workingImage->RGB(rgb);
 
       for (int i = 0; i < 3; i++) {
         QString newName;
@@ -349,10 +350,12 @@ void MainWindow::on_actionRGB_triggered()
 
 void MainWindow::on_actionSave_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+  if (workingImage) {
+    setOperationsEnabled(false);
 
     QString filename = QFileDialog::getSaveFileName(this, QLatin1String("Save"));
+
+    setOperationsEnabled(true);
 
     if (!filename.isEmpty()) {
       std::vector<int> qualityType;
@@ -362,70 +365,78 @@ void MainWindow::on_actionSave_triggered()
 
       filename += ".jpg";
 
-      cv::imwrite(filename.toStdString(), image->current, qualityType);
+      cv::imwrite(filename.toStdString(), workingImage->current, qualityType);
     }
   }
 }
 
 void MainWindow::on_actionSet_Scale_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
-
+  if (workingImage) {
     disableOtherTabs();
+    setOperationsEnabled(false);
 
-    setScaleWindow = new SetScaleWindow(image, this);
+    setScaleWindow = new SetScaleWindow(workingImage, this);
+
+    connect(workingImage,   SIGNAL(status(QString)),
+            ui->statusBar,  SLOT(showMessage(QString)));
+
+    connect(setScaleWindow, SIGNAL(destroyed()),
+            this,           SLOT(releaseStatusBar()));
 
     connect(setScaleWindow, SIGNAL(destroyed()),
             this,           SLOT(enableAllTabs()));
 
-    connect(image,          SIGNAL(status(QString)),
-            ui->statusBar,  SLOT(showMessage(QString)));
+    connect(setScaleWindow, SIGNAL(destroyed()),
+            this,           SLOT(enableAllOperations()));
   }
 }
 
 void MainWindow::on_actionStretch_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
+  if (workingImage) {
+    workingImage->backup();
 
-    image->backup();
+    cv::normalize(workingImage->previous,
+                  workingImage->current,
+                  0,
+                  255,
+                  cv::NORM_MINMAX);
 
-    cv::normalize(image->previous, image->current, 0, 255, cv::NORM_MINMAX);
-
-    image->update();
+    workingImage->update();
   }
 }
 
 void MainWindow::on_actionThreshold_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)(ui->imagesTabWidget->currentWidget());
-
-    if (image->current.channels() == 1) {
+  if (workingImage) {
+    if (workingImage->current.channels() == 1) {
       disableOtherTabs();
+      setOperationsEnabled(false);
 
-      thresholdWindow = new ThresholdWindow(image, this);
+      thresholdWindow = new ThresholdWindow(workingImage, this);
 
       connect(thresholdWindow,  SIGNAL(destroyed()),
               this,             SLOT(enableAllTabs()));
+
+      connect(thresholdWindow,  SIGNAL(destroyed()),
+              this,             SLOT(enableAllOperations()));
     }
   }
 }
 
 void MainWindow::on_actionUndo_triggered()
 {
-  if (images.size() > 0) {
-    Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-    image->undo();
-  }
+  if (workingImage)
+    workingImage->undo();
 }
 
 void MainWindow::on_imagesTabWidget_currentChanged(QWidget *image)
 {
-  if (ui->imagesTabWidget->currentIndex() != -1)
-    ((Image*)image)->update();
+  workingImage = (Image*)image;
+
+  if (workingImage != 0)
+    workingImage->update();
 }
 
 void MainWindow::on_imagesTabWidget_tabCloseRequested(int index)
@@ -439,12 +450,11 @@ void MainWindow::on_imagesTabWidget_tabCloseRequested(int index)
 void MainWindow::crop(QRect rect)
 {
   int index = ui->imagesTabWidget->currentIndex();
-  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
   QString name = ui->imagesTabWidget->tabText(index);
 
   if (rect.width() != 0 && rect.height() != 0) {
     cv::Rect roi(rect.x(), rect.y(), rect.width(), rect.height());
-    cv::Mat mat = image->current(roi);
+    cv::Mat mat = workingImage->current(roi);
 
     Image* newImage = new Image(mat, this);
     images.push_back(newImage);
@@ -452,12 +462,14 @@ void MainWindow::crop(QRect rect)
     ui->imagesTabWidget->insertTab(++index, newImage, name + " (crop)");
   }
 
-  image->setFitToScreenCheckboxEnabled(true);
+  workingImage->setFitToScreenCheckboxEnabled(true);
+  enableAllTabs();
+  enableAllOperations();
 
-  disconnect(image, SIGNAL(rectangleSelected(QRect)),
-             this,  SLOT(crop(QRect)));
+  disconnect(workingImage,  SIGNAL(rectangleSelected(QRect)),
+             this,          SLOT(crop(QRect)));
 
-  disconnect(image,         SIGNAL(status(QString)),
+  disconnect(workingImage,  SIGNAL(status(QString)),
              ui->statusBar, SLOT(showMessage(QString)));
 
   ui->statusBar->clearMessage();
@@ -465,7 +477,7 @@ void MainWindow::crop(QRect rect)
 
 void MainWindow::disableOtherTabs()
 {
-  if (images.size() > 0) {
+  if (workingImage) {
     int index = ui->imagesTabWidget->currentIndex();
 
     ui->imagesTabWidget->setTabsClosable(false);
@@ -476,45 +488,77 @@ void MainWindow::disableOtherTabs()
   }
 }
 
-void MainWindow::enableAllTabs()
+void MainWindow::enableAllOperations()
 {
-  if (images.size() > 0) {
-    ui->imagesTabWidget->setTabsClosable(true);
-
-    for (int i = 0; i < ui->imagesTabWidget->count(); i++)
-      ui->imagesTabWidget->setTabEnabled(i, true);
-  }
+  setOperationsEnabled(true);
 }
 
-void MainWindow::measure(QLine line, QPoint center)
+void MainWindow::enableAllTabs()
 {
-  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
+  ui->imagesTabWidget->setTabsClosable(true);
 
-  float distance = sqrt(pow(line.x1() - line.x2(), 2) +
-                        pow(line.y1() - line.y2(), 2)) * image->scale;
-
-  image->drawText(center, QString::number(distance) + ' ' + image->unit);
-
-  ui->statusBar->showMessage("Distance: " +
-                             QString::number(distance) +
-                             ' ' +
-                             image->unit);
+  for (int i = 0; i < ui->imagesTabWidget->count(); i++)
+    ui->imagesTabWidget->setTabEnabled(i, true);
 }
 
 void MainWindow::finishMeasuring()
 {
-  Image* image = (Image*)ui->imagesTabWidget->currentWidget();
-
-  image->setFitToScreenCheckboxEnabled(true);
-
+  workingImage->setFitToScreenCheckboxEnabled(true);
   enableAllTabs();
+  enableAllOperations();
 
-  disconnect(image, SIGNAL(lineSelected(QLine, QPoint)),
-             this,  SLOT(measure(QLine, QPoint)));
+  ui->statusBar->clearMessage();
 
-  disconnect(image,          SIGNAL(status(QString)),
-             ui->statusBar,  SLOT(showMessage(QString)));
+  disconnect(workingImage,  SIGNAL(lineSelected(QLine, QPoint)),
+             this,          SLOT(measure(QLine, QPoint)));
 
-  disconnect(image, SIGNAL(exitSelectionMode()),
-             this,  SLOT(finishMeasuring()));
+  disconnect(workingImage,  SIGNAL(status(QString)),
+             ui->statusBar, SLOT(showMessage(QString)));
+
+  disconnect(workingImage,  SIGNAL(exitSelectionMode()),
+             this,          SLOT(finishMeasuring()));
+}
+
+void MainWindow::measure(QLine line, QPoint center)
+{
+  float distance = sqrt(pow(line.x1() - line.x2(), 2) +
+                        pow(line.y1() - line.y2(), 2)) * workingImage->scale;
+
+  workingImage->drawText(center,
+                         QString::number(distance) + ' ' + workingImage->unit);
+
+  ui->statusBar->showMessage("Distance: " +
+                             QString::number(distance) +
+                             ' ' +
+                             workingImage->unit);
+}
+
+void MainWindow::releaseStatusBar()
+{
+  disconnect(workingImage,  SIGNAL(status(QString)),
+             ui->statusBar, SLOT(showMessage(QString)));
+}
+
+void MainWindow::setOperationsEnabled(bool enable)
+{
+  ui->actionBlur->setEnabled(enable);
+  ui->actionCanny->setEnabled(enable);
+  ui->actionCrop->setEnabled(enable);
+  ui->actionDistance->setEnabled(enable);
+  ui->actionEqualize->setEnabled(enable);
+  ui->actionGradient->setEnabled(enable);
+  ui->actionGrayscale->setEnabled(enable);
+  ui->actionHistogram->setEnabled(enable);
+  ui->actionHSV->setEnabled(enable);
+  ui->actionInvert->setEnabled(enable);
+  ui->actionMorphology->setEnabled(enable);
+  ui->actionOpen->setEnabled(enable);
+  ui->actionParticles->setEnabled(enable);
+  ui->actionRevert->setEnabled(enable);
+  ui->actionRGB->setEnabled(enable);
+  ui->actionSave->setEnabled(enable);
+  ui->actionSet_Scale->setEnabled(enable);
+  ui->actionStretch->setEnabled(enable);
+  ui->actionThreshold->setEnabled(enable);
+  ui->actionUndo->setEnabled(enable);
 }

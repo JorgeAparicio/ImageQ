@@ -72,13 +72,16 @@ class MainWindow : public QMainWindow
 
     void crop(QRect rect);
     void disableOtherTabs();
+    void enableAllOperations();
     void enableAllTabs();
-    void measure(QLine line, QPoint center);
     void finishMeasuring();
+    void measure(QLine line, QPoint center);
+    void releaseStatusBar();
 
   private:
     Ui::MainWindow *ui;
     QVector<Image*> images;
+    Image* workingImage;
     AboutWindow *aboutWindow;
     BlurWindow *blurWindow;
     CannyWindow *cannyWindow;
@@ -87,4 +90,6 @@ class MainWindow : public QMainWindow
     MorphologyWindow *morphologyWindow;
     ThresholdWindow *thresholdWindow;
     SetScaleWindow *setScaleWindow;
+
+    void setOperationsEnabled(bool enable);
 };
