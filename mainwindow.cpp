@@ -136,16 +136,13 @@ void MainWindow::on_actionDistance_triggered()
     disableOtherTabs();
     setOperationsEnabled(false);
 
-    connect(workingImage, SIGNAL(lineSelected(QLine, QPoint)),
-            this,         SLOT(measure(QLine, QPoint)));
-
     connect(workingImage,   SIGNAL(status(QString)),
             ui->statusBar,  SLOT(showMessage(QString)));
 
     connect(workingImage, SIGNAL(exitSelectionMode()),
             this,         SLOT(finishMeasuring()));
 
-    workingImage->setSelectionMode(Image::Line);
+    workingImage->setSelectionMode(Image::Distance);
   }
 }
 
@@ -514,28 +511,11 @@ void MainWindow::finishMeasuring()
 
   ui->statusBar->clearMessage();
 
-  disconnect(workingImage,  SIGNAL(lineSelected(QLine, QPoint)),
-             this,          SLOT(measure(QLine, QPoint)));
-
   disconnect(workingImage,  SIGNAL(status(QString)),
              ui->statusBar, SLOT(showMessage(QString)));
 
   disconnect(workingImage,  SIGNAL(exitSelectionMode()),
              this,          SLOT(finishMeasuring()));
-}
-
-void MainWindow::measure(QLine line, QPoint center)
-{
-  float distance = sqrt(pow(line.x1() - line.x2(), 2) +
-                        pow(line.y1() - line.y2(), 2)) * workingImage->scale;
-
-  workingImage->drawText(center,
-                         QString::number(distance) + ' ' + workingImage->unit);
-
-  ui->statusBar->showMessage("Distance: " +
-                             QString::number(distance) +
-                             ' ' +
-                             workingImage->unit);
 }
 
 void MainWindow::releaseStatusBar()

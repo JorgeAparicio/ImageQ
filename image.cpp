@@ -21,6 +21,7 @@
 #include "ui_image.h"
 
 #include "mat2qimage.h"
+#include "textlistwindow.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -189,6 +190,10 @@ void Image::mouseDoubleClick(QPoint p)
       setSelectionMode(None);
       break;
 
+    case Distance:
+      setSelectionMode(None);
+      break;
+
     case Rectangle:
       if (rect.topLeft().x() <= p.x() && p.x() <= rect.bottomRight().x() &&
           rect.topLeft().y() <= p.y() && p.y() <= rect.bottomRight().y()) {
@@ -239,6 +244,7 @@ void Image::mouseMove(QPoint p)
           break;
         }
 
+        case Distance:
         case Line:
         {
           QLine line(p1 * pixmap.width() / current.cols,
@@ -289,6 +295,24 @@ void Image::mouseRelease(QPoint p)
                             (p1 + p2) * pixmap.width() / (2 * current.cols));
           break;
 
+        case Distance:
+        {
+          int N = distances->size() + 1;
+          float distance = sqrt(pow(p1.x() - p2.x(), 2) +
+                                pow(p1.y() - p2.y(), 2)) * scale;
+          QPainter p(&tempPixmap);
+          color.setAlpha(128);
+          p.setPen(QPen(color));
+          p.drawText((p1 + p2) * pixmap.width() / current.cols / 2,
+                     QString::number(N));
+          overlayedPixmap = tempPixmap;
+          ui->imageLabel->setPixmap(overlayedPixmap);
+          distances->append(QString::number(N) + '\t' +
+                           QString::number(distance) + '\t' +
+                           unit);
+          break;
+        }
+
         case Rectangle:
           emit status("Double-click inside the area to crop.");
 
@@ -337,11 +361,18 @@ void Image::setSelectionMode(SelectionMode mode)
       emit status("");
       break;
 
+    case Distance:
+      distances = new TextListWindow("Distances",
+                                     "N\tLength\tUnit",
+                                     this);
+      connect(distances,  SIGNAL(destroyed()),
+              this,       SLOT(setSelectionMode()));
     case Line:
       overlayedPixmap = pixmap;
       tempPixmap = pixmap;
       emit status("Drag-draw a line. Double-click to exit.");
       break;
+
 
     case Rectangle:
       overlayedPixmap = pixmap;

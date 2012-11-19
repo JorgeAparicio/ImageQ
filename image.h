@@ -24,6 +24,8 @@
 
 #include <opencv2/core/core.hpp>
 
+class TextListWindow;
+
 namespace Ui {
   class Image;
 }
@@ -34,7 +36,7 @@ class Image : public QWidget
     
   public:
     enum SelectionMode {
-      None, Line, Rectangle
+      None, Line, Rectangle, Distance
     };
 
     explicit Image(QString pathToImage, QWidget *parent = 0);
@@ -71,7 +73,7 @@ class Image : public QWidget
     void mouseRelease(QPoint p);
     void on_fitToScreenCheckBox_toggled(bool checked);
     void rescale();
-    void setSelectionMode(SelectionMode mode);
+    void setSelectionMode(SelectionMode mode = None);
     void update();
 
   private:
@@ -83,6 +85,7 @@ class Image : public QWidget
     QColor color;
     bool mousePressed;
     SelectionMode selectionMode;
+    TextListWindow *distances;
 
     void remapPoint(QPoint &p) const;
     void initialize();

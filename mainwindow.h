@@ -75,7 +75,6 @@ class MainWindow : public QMainWindow
     void enableAllOperations();
     void enableAllTabs();
     void finishMeasuring();
-    void measure(QLine line, QPoint center);
     void releaseStatusBar();
 
   private:

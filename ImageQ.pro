@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     thresholdwindow.cpp \
     image.cpp \
     imagelabel.cpp \
-    setscalewindow.cpp
+    setscalewindow.cpp \
+    textlistwindow.cpp
 
 HEADERS  += mainwindow.h \
     mat2qimage.h \
@@ -47,7 +48,8 @@ HEADERS  += mainwindow.h \
     thresholdwindow.h \
     image.h \
     imagelabel.h \
-    setscalewindow.h
+    setscalewindow.h \
+    textlistwindow.h
 
 FORMS    += mainwindow.ui \
     aboutwindow.ui \
@@ -58,7 +60,8 @@ FORMS    += mainwindow.ui \
     morphologywindow.ui \
     thresholdwindow.ui \
     image.ui \
-    setscalewindow.ui
+    setscalewindow.ui \
+    textlistwindow.ui
 
 OTHER_FILES += \
     README.txt \
