@@ -255,13 +255,18 @@ void MainWindow::on_actionHSV_triggered()
 void MainWindow::on_actionInvert_triggered()
 {
   if (workingImage) {
-    if (workingImage->current.channels() == 1) {
-      workingImage->backup();
+    std::vector<cv::Mat> channels;
 
-      workingImage->current = 255 - workingImage->current;
+    workingImage->backup();
 
-      workingImage->update();
-    }
+    cv::split(workingImage->current, channels);
+
+    for (size_t i = 0; i < channels.size(); i++)
+      channels.at(i) = 255 - channels.at(i);
+
+    cv::merge(channels, workingImage->current);
+
+    workingImage->update();
   }
 }
 
