@@ -49,6 +49,8 @@ void Image::initialize()
 {
   ui->setupUi(this);
 
+  distances = 0;
+
   first.copyTo(current);
 
   color = QColor(Qt::red);
@@ -132,21 +134,6 @@ void Image::undo()
   }
 }
 
-void Image::drawText(QPoint center, QString text)
-{
-  QPainter p(&overlayedPixmap);
-  color.setAlpha(128);
-  p.setPen(color);
-  p.drawText(center, text);
-
-  ui->imageLabel->setPixmap(overlayedPixmap);
-}
-
-void Image::setFitToScreenCheckboxEnabled(bool enabled)
-{
-  ui->fitToScreenCheckBox->setEnabled(enabled);
-}
-
 void Image::display()
 {
   pixmap = QPixmap::fromImage(Mat2QImage(current));
@@ -154,7 +141,12 @@ void Image::display()
   if (ui->fitToScreenCheckBox->isChecked())
     pixmap = pixmap.scaled(ui->imageLabel->size(), Qt::KeepAspectRatio);
 
-  ui->imageLabel->setPixmap(pixmap);
+  loadOverlay();
+
+  if (ui->withOverlayCheckBox->isChecked())
+    ui->imageLabel->setPixmap(overlayedPixmap);
+  else
+    ui->imageLabel->setPixmap(pixmap);
 }
 
 void Image::pixelInfo(QPoint p) const
@@ -187,29 +179,26 @@ void Image::mouseDoubleClick(QPoint p)
 
     case Line:
       emit lineSelected(QLine());
-      setSelectionMode(None);
       break;
 
     case Distance:
-      setSelectionMode(None);
       break;
 
     case Rectangle:
       if (rect.topLeft().x() <= p.x() && p.x() <= rect.bottomRight().x() &&
           rect.topLeft().y() <= p.y() && p.y() <= rect.bottomRight().y()) {
-        selectionMode = None;
         emit rectangleSelected(rect);
       } else {
-        selectionMode = None;
         emit rectangleSelected(QRect());
       }
+      overlay.rect.pop_back();
       break;
   }
 
+  setSelectionMode(None);
+
   p1 = QPoint(-1, -1);
   p2 = QPoint(-1, -1);
-
-  ui->imageLabel->setPixmap(pixmap);
 }
 
 void Image::mouseMove(QPoint p)
@@ -268,6 +257,9 @@ void Image::mousePress(QPoint p)
   if (selectionMode != None) {
     remapPoint(p);
 
+    if (selectionMode == Rectangle)
+      clearOverlay();
+
     mousePressed = true;
 
     p1 = p;
@@ -284,15 +276,16 @@ void Image::mouseRelease(QPoint p)
 
     p2 = p;
 
+    overlayedPixmap = tempPixmap;
+
     if (p1.x() >= 0 && p1.y() >= 0 && (p1.x() != p2.x() || p1.y() != p2.y()))
       switch (selectionMode) {
         case None:
           break;
 
         case Line:
-          overlayedPixmap = tempPixmap;
-          emit lineSelected(QLine(p1, p2),
-                            (p1 + p2) * pixmap.width() / (2 * current.cols));
+          overlay.line.append(QLine(p1, p2));
+          emit lineSelected(QLine(p1, p2));
           break;
 
         case Distance:
@@ -300,26 +293,36 @@ void Image::mouseRelease(QPoint p)
           int N = distances->size() + 1;
           float distance = sqrt(pow(p1.x() - p2.x(), 2) +
                                 pow(p1.y() - p2.y(), 2)) * scale;
-          QPainter p(&tempPixmap);
+          Text text;
+          text.p = (p1 + p2) / 2;
+          text.s = QString::number(N);
+
+          overlay.line.append(QLine(p1, p2));
+          overlay.text.append(text);
+
+          QPainter p(&overlayedPixmap);
           color.setAlpha(128);
           p.setPen(QPen(color));
-          p.drawText((p1 + p2) * pixmap.width() / current.cols / 2,
-                     QString::number(N));
-          overlayedPixmap = tempPixmap;
+          p.drawText((text.p * pixmap.width()) / current.cols,
+                     text.s);
+
           ui->imageLabel->setPixmap(overlayedPixmap);
           distances->append(QString::number(N) + '\t' +
-                           QString::number(distance) + '\t' +
-                           unit);
+                            QString::number(distance) + '\t' +
+                            unit);
           break;
         }
 
         case Rectangle:
           emit status("Double-click inside the area to crop.");
 
-          if (p1.x() < p2.x() || p1.y() < p2.y())
+          if (p1.x() < p2.x() || p1.y() < p2.y()) {
             rect = QRect(p1, p2);
-          else
+            overlay.rect.append(QRect(p1, p2));
+          } else {
             rect = QRect(p2, p1);
+            overlay.rect.append(QRect(p2, p1));
+          }
           break;
       }
   }
@@ -354,17 +357,21 @@ void Image::rescale()
 void Image::setSelectionMode(SelectionMode mode)
 {
   selectionMode = mode;
+  ui->withOverlayCheckBox->setChecked(true);
 
   switch (mode) {
     case None:
+      ui->withOverlayCheckBox->setChecked(false);
       emit exitSelectionMode();
       emit status("");
       break;
 
     case Distance:
-      distances = new TextListWindow("Distances",
-                                     "N\tLength\tUnit",
-                                     this);
+      if (distances == 0)
+        distances = new TextListWindow("Distances",
+                                       "N\tLength\tUnit",
+                                       this);
+
       connect(distances,  SIGNAL(destroyed()),
               this,       SLOT(setSelectionMode()));
     case Line:
@@ -375,6 +382,7 @@ void Image::setSelectionMode(SelectionMode mode)
 
 
     case Rectangle:
+      clearOverlay();
       overlayedPixmap = pixmap;
       tempPixmap = pixmap;
       emit status("Drag-select an area.");
@@ -411,7 +419,68 @@ void Image::update()
       break;
   }
 
+  clearOverlay();
+
   display();
+}
+
+void Image::clearOverlay()
+{
+  overlay.line.clear();
+  overlay.text.clear();
+  overlay.rect.clear();
+
+  if (distances)
+    detachDistancesWindows();
+
+  ui->imageLabel->setPixmap(pixmap);
+  overlayedPixmap = pixmap;
+}
+
+void Image::loadOverlay()
+{
+  overlayedPixmap = pixmap;
+  QPainter p(&overlayedPixmap);
+
+  color.setAlpha(128);
+  p.setPen(color);
+  color.setAlpha(64);
+  for (int i = 0; i < overlay.line.size(); i++) {
+    QPoint p1 = overlay.line.at(i).p1();
+    QPoint p2 = overlay.line.at(i).p2();
+
+    p1 = p1 * pixmap.width() / current.cols;
+    p2 = p2 * pixmap.width() / current.cols;
+
+    p.drawLine(QLine(p1, p2));
+  }
+
+  for (int i = 0; i < overlay.text.size(); i++) {
+    QPoint p1 = overlay.text.at(i).p;
+
+    p1 = p1 * pixmap.width() / current.cols;
+
+    p.drawText(p1, overlay.text.at(i).s);
+  }
+
+  for (int i = 0; i < overlay.rect.size(); i++) {
+    QPoint p1 = overlay.rect.at(i).topLeft();
+    QPoint p2 = overlay.rect.at(i).bottomRight();
+
+    p1 = p1 * pixmap.width() / current.cols;
+    p2 = p2 * pixmap.width() / current.cols;
+
+    p.drawRect(QRect(p1, p2));
+    p.fillRect(QRect(p1, p2), color);
+  }
+}
+
+void Image::detachDistancesWindows()
+{
+  disconnect(distances,  SIGNAL(destroyed()),
+             this,       SLOT(setSelectionMode()));
+
+  distances = 0;
 }
 
 void Image::remapPoint(QPoint &p) const
@@ -455,4 +524,12 @@ void Image::remapPoint(QPoint &p) const
 
   p.setX(x);
   p.setY(y);
+}
+
+void Image::on_withOverlayCheckBox_toggled(bool checked)
+{
+  if (checked)
+    ui->imageLabel->setPixmap(overlayedPixmap);
+  else
+    ui->imageLabel->setPixmap(pixmap);
 }

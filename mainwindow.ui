@@ -134,6 +134,7 @@
     <addaction name="actionSet_Scale"/>
     <addaction name="actionDistance"/>
     <addaction name="actionParticles"/>
+    <addaction name="actionClear"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -251,6 +252,11 @@
   <action name="actionParticles">
    <property name="text">
     <string>Particles</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="text">
+    <string>Clear</string>
    </property>
   </action>
  </widget>

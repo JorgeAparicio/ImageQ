@@ -77,6 +77,8 @@ class MainWindow : public QMainWindow
     void finishMeasuring();
     void releaseStatusBar();
 
+    void on_actionClear_triggered();
+
   private:
     Ui::MainWindow *ui;
     QVector<Image*> images;

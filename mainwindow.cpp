@@ -110,7 +110,6 @@ void MainWindow::on_actionCanny_triggered()
 void MainWindow::on_actionCrop_triggered()
 {
   if (workingImage) {
-    workingImage->setFitToScreenCheckboxEnabled(false);
     disableOtherTabs();
     setOperationsEnabled(false);
 
@@ -132,7 +131,6 @@ void MainWindow::on_actionClose_triggered()
 void MainWindow::on_actionDistance_triggered()
 {
   if (workingImage) {
-    workingImage->setFitToScreenCheckboxEnabled(false);
     disableOtherTabs();
     setOperationsEnabled(false);
 
@@ -464,7 +462,6 @@ void MainWindow::crop(QRect rect)
     ui->imagesTabWidget->insertTab(++index, newImage, name + " (crop)");
   }
 
-  workingImage->setFitToScreenCheckboxEnabled(true);
   enableAllTabs();
   enableAllOperations();
 
@@ -505,7 +502,6 @@ void MainWindow::enableAllTabs()
 
 void MainWindow::finishMeasuring()
 {
-  workingImage->setFitToScreenCheckboxEnabled(true);
   enableAllTabs();
   enableAllOperations();
 
@@ -546,4 +542,11 @@ void MainWindow::setOperationsEnabled(bool enable)
   ui->actionStretch->setEnabled(enable);
   ui->actionThreshold->setEnabled(enable);
   ui->actionUndo->setEnabled(enable);
+  ui->actionClear->setEnabled(enable);
+}
+
+void MainWindow::on_actionClear_triggered()
+{
+  workingImage->clearOverlay();
+  workingImage->detachDistancesWindows();
 }

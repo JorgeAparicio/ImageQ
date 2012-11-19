@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>625</width>
+    <width>747</width>
     <height>154</height>
    </rect>
   </property>
@@ -23,6 +23,13 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="withOverlayCheckBox">
+       <property name="text">
+        <string>With overlay</string>
        </property>
       </widget>
      </item>
@@ -135,7 +142,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>605</width>
+        <width>727</width>
         <height>76</height>
        </rect>
       </property>

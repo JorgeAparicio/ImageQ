@@ -30,6 +30,11 @@ namespace Ui {
   class Image;
 }
 
+struct Text {
+    QPoint p;
+    QString s;
+};
+
 class Image : public QWidget
 {
     Q_OBJECT
@@ -60,10 +65,6 @@ class Image : public QWidget
     void rectangleSelected(QRect const& rect);
     void status(QString const& msg);
 
-  public:
-    void drawText(QPoint center, QString text);
-    void setFitToScreenCheckboxEnabled(bool enabled);
-
   public slots:
     void display();
     void pixelInfo(QPoint p) const;
@@ -76,6 +77,13 @@ class Image : public QWidget
     void setSelectionMode(SelectionMode mode = None);
     void update();
 
+    void clearOverlay();
+    void loadOverlay();
+    void detachDistancesWindows();
+
+  private slots:
+    void on_withOverlayCheckBox_toggled(bool checked);
+
   private:
     Ui::Image *ui;
     cv::Mat first;
@@ -86,6 +94,11 @@ class Image : public QWidget
     bool mousePressed;
     SelectionMode selectionMode;
     TextListWindow *distances;
+    struct {
+        QVector<QLine> line;
+        QVector<Text> text;
+        QVector<QRect> rect;
+    } overlay;
 
     void remapPoint(QPoint &p) const;
     void initialize();
