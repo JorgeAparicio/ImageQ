@@ -50,6 +50,7 @@ void Image::initialize()
   ui->setupUi(this);
 
   distances = 0;
+  areas = 0;
 
   first.copyTo(current);
 
@@ -88,6 +89,8 @@ void Image::initialize()
 Image::~Image()
 {
   delete ui;
+  distances->close();
+  areas->close();
 
   // FIXME: Is this necessary?
   current.release();
@@ -307,6 +310,7 @@ void Image::mouseRelease(QPoint p)
                      text.s);
 
           ui->imageLabel->setPixmap(overlayedPixmap);
+          tempPixmap = overlayedPixmap;
           distances->append(QString::number(N) + '\t' +
                             QString::number(distance) + '\t' +
                             unit);
@@ -361,25 +365,26 @@ void Image::setSelectionMode(SelectionMode mode)
 
   switch (mode) {
     case None:
-      ui->withOverlayCheckBox->setChecked(false);
       emit exitSelectionMode();
       emit status("");
       break;
 
     case Distance:
-      if (distances == 0)
+      if (distances == 0) {
+        clearOverlay();
+
         distances = new TextListWindow("Distances",
                                        "N\tLength\tUnit",
                                        this);
+      }
 
       connect(distances,  SIGNAL(destroyed()),
-              this,       SLOT(setSelectionMode()));
+              this,       SLOT(detachDistancesWindows()));
     case Line:
       overlayedPixmap = pixmap;
       tempPixmap = pixmap;
       emit status("Drag-draw a line. Double-click to exit.");
       break;
-
 
     case Rectangle:
       clearOverlay();
@@ -431,7 +436,10 @@ void Image::clearOverlay()
   overlay.rect.clear();
 
   if (distances)
-    detachDistancesWindows();
+    distances->close();
+
+  if (areas)
+    areas->close();
 
   ui->imageLabel->setPixmap(pixmap);
   overlayedPixmap = pixmap;
@@ -475,12 +483,20 @@ void Image::loadOverlay()
   }
 }
 
+void Image::detachAreasWindows()
+{
+  areas = 0;
+
+  clearOverlay();
+}
+
 void Image::detachDistancesWindows()
 {
-  disconnect(distances,  SIGNAL(destroyed()),
-             this,       SLOT(setSelectionMode()));
-
   distances = 0;
+
+  setSelectionMode();
+
+  clearOverlay();
 }
 
 void Image::remapPoint(QPoint &p) const
@@ -524,6 +540,42 @@ void Image::remapPoint(QPoint &p) const
 
   p.setX(x);
   p.setY(y);
+}
+
+void Image::overlayAreas(std::vector<cv::ConnectedComponentStats> const &stats)
+{
+  if (areas == 0) {
+    ui->withOverlayCheckBox->setChecked(true);
+
+    areas = new TextListWindow("Areas",
+                               "N\tArea\tUnit",
+                               this);
+
+    for (size_t i = 1; i < stats.size(); i++) {
+      cv::ConnectedComponentStats stat = stats.at(i);
+
+      areas->append(QString::number(i) + "\t" +
+                    QString::number(stat.area * scale * scale) + "\t" +
+                    unit + "^2");
+
+      Text text;
+      text.p = QPoint(stat.centroid_x, stat.centroid_y);
+      text.s = QString::number(i);
+
+      overlay.text.append(text);
+
+      QPainter p(&overlayedPixmap);
+      color.setAlpha(128);
+      p.setPen(QPen(color));
+      p.drawText((text.p * pixmap.width()) / current.cols,
+                 text.s);
+    }
+
+    connect(areas,  SIGNAL(destroyed()),
+            this,   SLOT(detachAreasWindows()));
+
+    ui->imageLabel->setPixmap(overlayedPixmap);
+  }
 }
 
 void Image::on_withOverlayCheckBox_toggled(bool checked)

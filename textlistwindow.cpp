@@ -60,7 +60,7 @@ int TextListWindow::size() const
   return count;
 }
 
-void TextListWindow::on_pushButton_clicked()
+void TextListWindow::on_savePushButton_clicked()
 {
   QString filename = QFileDialog::getSaveFileName(this,
                                                   QLatin1String("Save"),
@@ -81,7 +81,7 @@ void TextListWindow::on_pushButton_clicked()
   this->close();
 }
 
-void TextListWindow::on_pushButton_2_clicked()
+void TextListWindow::on_closePushButton_clicked()
 {
   this->close();
 }

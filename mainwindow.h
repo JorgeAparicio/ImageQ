@@ -49,6 +49,7 @@ class MainWindow : public QMainWindow
     void on_actionBlur_triggered();
     void on_actionCanny_triggered();
     void on_actionCrop_triggered();
+    void on_actionClear_triggered();
     void on_actionClose_triggered();
     void on_actionDistance_triggered();
     void on_actionEqualize_triggered();
@@ -59,6 +60,7 @@ class MainWindow : public QMainWindow
     void on_actionInvert_triggered();
     void on_actionMorphology_triggered();
     void on_actionOpen_triggered();
+    void on_actionParticles_triggered();
     void on_actionRevert_triggered();
     void on_actionRGB_triggered();
     void on_actionSave_triggered();
@@ -76,8 +78,6 @@ class MainWindow : public QMainWindow
     void enableAllTabs();
     void finishMeasuring();
     void releaseStatusBar();
-
-    void on_actionClear_triggered();
 
   private:
     Ui::MainWindow *ui;

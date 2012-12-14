@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     image.cpp \
     imagelabel.cpp \
     setscalewindow.cpp \
-    textlistwindow.cpp
+    textlistwindow.cpp \
+    opencv_future/imgproc/src/connectedcomponents.cpp
 
 HEADERS  += mainwindow.h \
     mat2qimage.h \
@@ -49,7 +50,8 @@ HEADERS  += mainwindow.h \
     image.h \
     imagelabel.h \
     setscalewindow.h \
-    textlistwindow.h
+    textlistwindow.h \
+    opencv_future/imgproc/connectedcomponents.hpp
 
 FORMS    += mainwindow.ui \
     aboutwindow.ui \

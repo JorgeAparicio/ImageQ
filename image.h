@@ -24,6 +24,8 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <opencv_future/imgproc/connectedcomponents.hpp>
+
 class TextListWindow;
 
 namespace Ui {
@@ -52,6 +54,8 @@ class Image : public QWidget
     cv::Mat previous;
     float scale;
     QString unit;
+    TextListWindow *areas;
+    TextListWindow *distances;
 
     void backup();
     void HSV(std::vector<cv::Mat>& hsv) const;
@@ -79,7 +83,9 @@ class Image : public QWidget
 
     void clearOverlay();
     void loadOverlay();
+    void detachAreasWindows();
     void detachDistancesWindows();
+    void overlayAreas(std::vector<cv::ConnectedComponentStats> const &stats);
 
   private slots:
     void on_withOverlayCheckBox_toggled(bool checked);
@@ -93,7 +99,6 @@ class Image : public QWidget
     QColor color;
     bool mousePressed;
     SelectionMode selectionMode;
-    TextListWindow *distances;
     struct {
         QVector<QLine> line;
         QVector<Text> text;

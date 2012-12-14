@@ -27,6 +27,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <opencv_future/imgproc/connectedcomponents.hpp>
+
 #include "aboutwindow.h"
 #include "blurwindow.h"
 #include "cannywindow.h"
@@ -39,7 +41,6 @@
 // TODO: Batch processing
 // TODO: Channels merge
 // TODO: Macroing
-// TODO: Particle counting
 // TODO: Video processing...?
 // TODO: Watershed
 
@@ -123,6 +124,13 @@ void MainWindow::on_actionCrop_triggered()
   }
 }
 
+void MainWindow::on_actionClear_triggered()
+{
+  workingImage->clearOverlay();
+  workingImage->detachDistancesWindows();
+}
+
+
 void MainWindow::on_actionClose_triggered()
 {
   this->close();
@@ -131,16 +139,20 @@ void MainWindow::on_actionClose_triggered()
 void MainWindow::on_actionDistance_triggered()
 {
   if (workingImage) {
-    disableOtherTabs();
-    setOperationsEnabled(false);
+    if (workingImage->distances == 0) {
+      disableOtherTabs();
+      setOperationsEnabled(false);
 
-    connect(workingImage,   SIGNAL(status(QString)),
-            ui->statusBar,  SLOT(showMessage(QString)));
+      workingImage->clearOverlay();
 
-    connect(workingImage, SIGNAL(exitSelectionMode()),
-            this,         SLOT(finishMeasuring()));
+      connect(workingImage,   SIGNAL(status(QString)),
+              ui->statusBar,  SLOT(showMessage(QString)));
 
-    workingImage->setSelectionMode(Image::Distance);
+      connect(workingImage, SIGNAL(exitSelectionMode()),
+              this,         SLOT(finishMeasuring()));
+
+      workingImage->setSelectionMode(Image::Distance);
+    }
   }
 }
 
@@ -309,6 +321,26 @@ void MainWindow::on_actionOpen_triggered()
   }
 }
 
+void MainWindow::on_actionParticles_triggered()
+{
+  if (workingImage) {
+    if (workingImage->current.channels() == 1 && workingImage->areas == 0)  {
+      workingImage->clearOverlay();
+
+      cv::Mat labels(workingImage->current.rows,
+                     workingImage->current.cols,
+                     CV_32S);
+      std::vector<cv::ConnectedComponentStats> stats;
+
+      cv::connectedComponentsWithStats(labels,
+                                       workingImage->current,
+                                       stats);
+
+      workingImage->overlayAreas(stats);
+    }
+  }
+}
+
 void MainWindow::on_actionRevert_triggered()
 {
   if (workingImage)
@@ -433,6 +465,9 @@ void MainWindow::on_actionUndo_triggered()
 
 void MainWindow::on_imagesTabWidget_currentChanged(QWidget *image)
 {
+  if (workingImage)
+    workingImage->clearOverlay();
+
   workingImage = (Image*)image;
 
   if (workingImage != 0)
@@ -543,10 +578,4 @@ void MainWindow::setOperationsEnabled(bool enable)
   ui->actionThreshold->setEnabled(enable);
   ui->actionUndo->setEnabled(enable);
   ui->actionClear->setEnabled(enable);
-}
-
-void MainWindow::on_actionClear_triggered()
-{
-  workingImage->clearOverlay();
-  workingImage->detachDistancesWindows();
 }

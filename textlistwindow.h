@@ -38,9 +38,9 @@ class TextListWindow : public QMainWindow
     int size() const;
     
   private slots:
-    void on_pushButton_clicked();
+    void on_savePushButton_clicked();
 
-    void on_pushButton_2_clicked();
+    void on_closePushButton_clicked();
 
   private:
     Ui::TextListWindow *ui;

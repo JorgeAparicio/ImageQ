@@ -38,12 +38,19 @@ development.
 LICENSE
 =======
 
-ImageQ source code is released under the terms of the GNU General Public
+Most of ImageQ source code is released under the terms of the GNU General Public
 License (GPL) version 3.
 
 See COPYING.GPL3.txt for more details.
 
-There are some samples images under the 'samples' folder, those files are
-licensed under Creative Commons or belong to the public domain.
+There are two exceptions:
 
-See samples/license.txt for more details.
+1) The files inside the opencv_future folder. Those files are under the Intel
+   License Agreement For Open Source Computer Vision Library.
+
+   See inside those files for more details.
+
+2) The images under the 'samples' folder, those files are licensed under
+   Creative Commons or belong to the public domain.
+
+   See samples/license.txt for more details.
